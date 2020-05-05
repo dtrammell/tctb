@@ -18,8 +18,17 @@ $minute = -1
 $dots = ""
 
 # Configuration
-@configfile = YAML.load( File.open('tctb.config').read )
-pp @configfile.inspect if DEBUG
+def read_config
+	@configfile = YAML.load( File.open('tctb.config').read )
+	pp @configfile.inspect if DEBUG
+rescue Errno::ENOENT => e
+	puts "Config File 'tctb.config' NOT FOUND"
+	puts e.message
+	puts e.backtrace if DEBUG
+	exit
+end
+
+read_config
 
 $twitter_handle = @configfile[:twitter][:username]
 # (twitter client keys)
