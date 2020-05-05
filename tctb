@@ -2,8 +2,10 @@
 
 # Requirements
 require 'syslog'
+require 'yaml'
 require 'twitter'
 require 'pp'
+require 'cryptomnio'
 
 # Constants
 APPNAME = "TCTBot"
@@ -16,11 +18,11 @@ $minute = -1
 $dots = ""
 
 # Configuration
-# TODO: Read these from a config file
-$twitter_handle = "OaklabsDev00"
-# (twitter client keys)
+@configfile = YAML.load( File.open('tctb.config').read )
+pp @configfile.inspect if DEBUG
 
-#TODO: Load previously stored program state
+$twitter_handle = @configfile[:twitter][:username]
+# (twitter client keys)
 
 # Open Syslog
 Syslog.open(APPNAME, Syslog::LOG_CONS|Syslog::LOG_PID, Syslog::LOG_DAEMON)
@@ -29,12 +31,51 @@ Syslog.open(APPNAME, Syslog::LOG_CONS|Syslog::LOG_PID, Syslog::LOG_DAEMON)
 Syslog.info("%s v.%s Startup", APPNAME, VERSION)
 
 # Create Twitter Client Object
-client = Twitter::REST::Client.new do |config|
-	config.consumer_key        = "mee99Pk9ldaAngB1UmQcvC7XF"
-	config.consumer_secret     = "fjB1GTf0qRsiMkbF9FYtk8dhyktt0HnkA7wovF8IH7zPOEGJGP"
-	config.access_token        = "1245470305499385856-0yE734tlAboqYCjYYHLwPTooSrJrBZ"
-	config.access_token_secret = "LSWGkbQFHuZTzfMX9ZS9hdejrT2OpDo9H5x7CmW6JW55M"
+client = Twitter::REST::Client.new do |c|
+	c.consumer_key        = @configfile[:twitter][:consumer_key]
+	c.consumer_secret     = @configfile[:twitter][:consumer_secret]
+	c.access_token        = @configfile[:twitter][:access_token]
+	c.access_token_secret = @configfile[:twitter][:access_token_secret]
 end
+
+# Create Cryptomnio Client Object
+cryptomnio = Cryptomnio::REST::Client.new do |c|
+	c.config = {
+		# API Endpoint URL
+		apiurl: @configfile[:cryptomnio][:apiurl],
+		# Authentication
+      authtype: "Basic",
+      username: @configfile[:cryptomnio][:username],
+      password: @configfile[:cryptomnio][:password],
+      apikeys:  []
+   }
+
+	# Exchange API Keys
+	@configfile[:cryptomnio][:apikeys].each do |key|
+		c.config[:apikeys].push({
+			exchange:   key[:exchange],
+			key:        key[:key],
+			secret:     key[:secret],
+			clientid:   key[:clientid],
+			passphrase: key[:passphrase]
+		})
+	end
+end
+
+# Authenticate Cryptomnio
+cryptomnio.auth_basic
+
+# Check for valid stored key and upload keys from config if there are none
+keys = cryptomnio.get_all_exchange_keys
+if keys.size < 1
+	cryptomnio.upload_api_keys
+else
+	@ckey = keys[0]
+end
+
+# Populate Wallets Hash
+@wallet_balances = cryptomnio.wallet_get( @ckey )
+Syslog.info("Wallet Balances at startup: BTC: %s | USD: $%s", @wallet_balances["btc"]["amount"], @wallet_balances["usd"]["amount"]) 
 
 # Retireve most recent tweet (index 0 of returned Enumerable)
 lasttweet = client.user_timeline($twitter_handle, count: 1)[0]
@@ -57,17 +98,20 @@ while $shutdown != true
 		case $minute
 
 		when 0 # Post a new Poll
+			# Refresh Wallet Balances
+			@wallet_balances = cryptomnio.wallet_get( @ckey )
+
+			# Generate a new Poll ID
 			$pollid = "%d%02d%02d%02d" % [time.year, time.month, time.day, time.hour]
 			$pollid = $pollid.to_i
 			Syslog.info("Posting a new poll! (ID: %d)", $pollid)
-			tweet = "Poll %d: Should I BUY, SELL, or HODL? (Reply to this tweet with one of the keywords BUY, SELL, or HODL. The Twitter API does not yet support polls. Most recent message counts as your vote, multiple keywords ignored.)" % [$pollid]
+			tweet = "Poll %d: Should I BUY, SELL, or HODL? (BTC: %s | USD: \$%s) (Reply to this tweet with one of the keywords BUY, SELL, or HODL. The Twitter API does not yet support polls. Most recent message counts as your vote, multiple keywords ignored.)" % [ $pollid, @wallet_balances["btc"]["amount"], @wallet_balances["usd"]["amount"] ]
 			if tweet.length > 280
 				Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
 			end
-			if ! DEBUG
-				client.update(tweet)
-				sleep 60
-			end
+			puts tweet if DEBUG
+#			client.update(tweet)
+#			sleep 60
 
 		when 03 #55 # Close the Poll
 			# Retrieve most recent tweet
@@ -165,30 +209,78 @@ while $shutdown != true
 						$decision = "BUY"  if winner[1][0] == :buy
 						$decision = "SELL" if winner[1][0] == :sell
 						$decision = "HODL" if winner[1][0] == :hodl
+
+						# Post poll results
+						message = "The results for Poll %d are in! %s is the winner! (%d BUY | %d SELL | %d HODL)" % [$pollid, $decision, tally[:buy], tally[:sell], tally[:hodl]]
+						Syslog.info(message)
+						client.update(message) if ! DEBUG
 					end
 
 				end
 			end
 
-			# Post poll results
-			message = "The results for Poll %d are in! %s is the winner! (%d BUY | %d SELL | %d HODL)" % [$pollid, $decision, tally[:buy], tally[:sell], tally[:hodl]]
-			Syslog.info(message)
-			client.update(message) if ! DEBUG
-
 			# Execute desired trade via Cryptomnio
 			Syslog.info("Executing trades via Cryptomnio...")
-			# TODO: Integrate Cryptomnio back-end
 			case $decision
 			when "BUY"
-
+				# Determine 10% of USD
+				balance = @wallet_balances["usd"]["amount"].to_f
+				$amount  = balance * 0.1
+				# TODO: Determine BTC value of USD
+				$volume = 0
+				# Place BID order
+				message = "BUYing %0.8f BTC (10 percent of \$%s USD) at MARKET" % [ $volume, balance ]
+				Syslog.info(message)
+@order_id = 3 if DEBUG
+				$order_id = cryptomnio.order_create( @ckey, "buy", "MARKET", "btc_usd", $volume ) if ! DEBUG
 			when "SELL"
-
+				# Determine 10% of BTC
+				balance = @wallet_balances["btc"]["amount"].to_f
+				$volume = balance * 0.1
+				# Place ASK order
+				message = "SELLing %0.8f BTC (10 percent of %s BTC) at MARKET" % [ $volume, balance ] 
+				Syslog.info(message)
+@order_id = 3 if DEBUG
+				$order_id = cryptomnio.order_create( @ckey, "sell", "MARKET", "btc_usd", $volume ) if ! DEBUG
 			else
 				# HODL
+				$order_id = nil
 			end
 
-			# Post trade results
-			Syslog.info("Posting trade results...")
+			if $order_id
+				# Wait until order clears
+# TODO: Cryptomnio bug, order status isn't updating
+#				loop do
+#					sleep 1
+#					order_info = cryptomnio.order_get( @ckey, @order_id )
+#
+#					break if order_info["status"] != "open"
+#				end
+
+				# Fudge an order check; assume it clears in under 10 seconds
+				sleep 10
+
+				# Refresh Wallet Balances
+				@wallet_balances = cryptomnio.wallet_get( @ckey )
+				$balance_btc = @wallet_balances["btc"]["amount"].to_f
+				$balance_usd = @wallet_balances["usd"]["amount"].to_f
+
+				# Post trade results
+				Syslog.info("Posting trade results...")
+				case $decision
+				when "BUY"
+					tweet = "Trade Complete: BUY 10\% of USD: %0.8d BTC ($%0.2d USD)\nTrading fee: %0.02\nAccount Balances:\n\tBTC: %0.8d\n\tUSD: $%0.2d" % [ @order_info["volume"], usd_value, @order_info["fee"], $balance_btc, $balance_usd ]
+				when "SELL"
+					tweet = "Trade Complete: SELL 10\% of BTC: %0.8d BTC ($%0.2d USD, 10% of BTC)\nTrading fee: %0.02\nAccount Balances:\n\tBTC: %0.8d\n\tUSD: $%0.2d" % [ @order_info["volume"], usd_value, @order_info["fee"], $balance_btc, $balance_usd ]
+				end
+				if tweet.length > 280
+					Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
+				end
+				puts tweet if DEBUG
+#				client.update(tweet)
+			end
+
+
 			sleep 60 if ! DEBUG
 		else
 			if lastminute != $minute
@@ -203,4 +295,3 @@ while $shutdown != true
 	end
 
 end
-
