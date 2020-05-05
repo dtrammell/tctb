@@ -7,9 +7,11 @@ require 'twitter'
 require 'pp'
 require 'cryptomnio'
 
-# Constants
+# The application's Name
 APPNAME = "TCTBot"
+# The application's Version
 VERSION = "0.1.1"
+# Debug output boolean
 DEBUG = true
 
 # Global Variables Initialization
@@ -17,18 +19,18 @@ $shutdown = false
 $minute = -1
 $dots = ""
 
-# Configuration
+# Read YAML Configuration File into config data structure
 def read_config
-	@configfile = YAML.load( File.open('tctb.config').read )
-	pp @configfile.inspect if DEBUG
+	configfile = YAML.load( File.open('tctb.config').read )
+	pp configfile.inspect if DEBUG
+	return configfile
 rescue Errno::ENOENT => e
 	puts "Config File 'tctb.config' NOT FOUND"
 	puts e.message
 	puts e.backtrace if DEBUG
 	exit
 end
-
-read_config
+@configfile = read_config
 
 $twitter_handle = @configfile[:twitter][:username]
 # (twitter client keys)
@@ -40,7 +42,7 @@ Syslog.open(APPNAME, Syslog::LOG_CONS|Syslog::LOG_PID, Syslog::LOG_DAEMON)
 Syslog.info("%s v.%s Startup", APPNAME, VERSION)
 
 # Create Twitter Client Object
-client = Twitter::REST::Client.new do |c|
+@twitter = Twitter::REST::Client.new do |c|
 	c.consumer_key        = @configfile[:twitter][:consumer_key]
 	c.consumer_secret     = @configfile[:twitter][:consumer_secret]
 	c.access_token        = @configfile[:twitter][:access_token]
@@ -87,7 +89,7 @@ end
 Syslog.info("Wallet Balances at startup: BTC: %s | USD: $%s", @wallet_balances["btc"]["amount"], @wallet_balances["usd"]["amount"]) 
 
 # Retireve most recent tweet (index 0 of returned Enumerable)
-lasttweet = client.user_timeline($twitter_handle, count: 1)[0]
+lasttweet = @twitter.user_timeline($twitter_handle, count: 1)[0]
 Syslog.info("Most recent %s tweet at startup: \"%s...\"", $twitter_handle, lasttweet.text[0,26])
 
 # Timing Loop
@@ -119,12 +121,12 @@ while $shutdown != true
 				Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
 			end
 			puts tweet if DEBUG
-#			client.update(tweet)
+#			@twitter.update(tweet)
 #			sleep 60
 
 		when 03 #55 # Close the Poll
 			# Retrieve most recent tweet
-			$tweets = client.user_timeline($twitter_handle, count: 1)
+			$tweets = @twitter.user_timeline($twitter_handle, count: 1)
 			$lasttweet = $tweets[0]
 			Syslog.info("Retrieved most recent %s tweet (poll): \"%s...\"", $twitter_handle, $lasttweet.text[0,26])
 
@@ -139,7 +141,7 @@ while $shutdown != true
 			if $lasttweet
 				# Get all replies to the account after our poll tweet
 				query = "to:%s" % $twitter_handle
-				reply_tweets = client.search(query, since_id: lasttweet.id, result_type: "recent")
+				reply_tweets = @twitter.search(query, since_id: lasttweet.id, result_type: "recent")
 				#p reply_tweets if DEBUG
 				Syslog.debug("Got %d replies to user.", reply_tweets.count) if DEBUG
 				# TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.
@@ -189,7 +191,7 @@ while $shutdown != true
 				# Check if we have our minimum threshold of votes. Default to HODL if 
 				if votes.size < 1 #10
 					Syslog.info("Only received %d votes (< 10), HODL!", votes.size)
-					#client.update("Hourly voting closed.  Not enough votes to make a decision.  HODL!!! (Need minimum 10 votes... Maybe you should retweet my poll tweet?)") 
+					#@twitter.update("Hourly voting closed.  Not enough votes to make a decision.  HODL!!! (Need minimum 10 votes... Maybe you should retweet my poll tweet?)") 
 					$decision = "HODL"
 				else
 					# We have enough votes!  Make some trades...
@@ -212,7 +214,7 @@ while $shutdown != true
 						# Tie!  HODL...
 						message = "Result of the poll was a tie! I'm gonna %s. (%d BUY | %d SELL | %d HODL)" % [$decision, tally[:buy], tally[:sell], tally[:hodl]]
 						Syslog.info(message)
-						client.update(message) if ! DEBUG
+						@twitter.update(message) if ! DEBUG
 					else
 						# Winner!
 						$decision = "BUY"  if winner[1][0] == :buy
@@ -222,7 +224,7 @@ while $shutdown != true
 						# Post poll results
 						message = "The results for Poll %d are in! %s is the winner! (%d BUY | %d SELL | %d HODL)" % [$pollid, $decision, tally[:buy], tally[:sell], tally[:hodl]]
 						Syslog.info(message)
-						client.update(message) if ! DEBUG
+						@twitter.update(message) if ! DEBUG
 					end
 
 				end
@@ -286,7 +288,7 @@ while $shutdown != true
 					Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
 				end
 				puts tweet if DEBUG
-#				client.update(tweet)
+#				@twitter.update(tweet)
 			end
 
 
