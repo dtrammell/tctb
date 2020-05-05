@@ -65,7 +65,17 @@
 
     
     
+    <!-- Method Quickref -->
+<div id="method-list-section" class="nav-section">
+  <h3>Methods</h3>
+
+  <ul class="link-list" role="directory">
     
+    <li ><a href="#method-i-read_config">#read_config</a>
+    
+  </ul>
+</div>
+
   </div>
 </nav>
 
@@ -93,17 +103,17 @@
       
         <dt id="APPNAME">APPNAME
         
-        <dd><p>Constants</p>
+        <dd><p>The application&#39;s Name</p>
         
       
         <dt id="DEBUG">DEBUG
         
-        <dd>
+        <dd><p>Debug output boolean</p>
         
       
         <dt id="VERSION">VERSION
         
-        <dd>
+        <dd><p>The application&#39;s Version</p>
         
       
       </dl>
@@ -113,6 +123,54 @@
     
 
     
+     <section id="public-instance-5Buntitled-5D-method-details" class="method-section">
+       <header>
+         <h3>Public Instance Methods</h3>
+       </header>
+
+    
+      <div id="method-i-read_config" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">read_config</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Read YAML Configuration File into config data structure</p>
+          
+          
+
+          
+          <div class="method-source-code" id="read_config-source">
+            <pre><span class="ruby-comment"># File tctb, line 23</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">read_config</span>
+        <span class="ruby-identifier">configfile</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-string">&#39;tctb.config&#39;</span>).<span class="ruby-identifier">read</span> )
+        <span class="ruby-identifier">pp</span> <span class="ruby-identifier">configfile</span>.<span class="ruby-identifier">inspect</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">DEBUG</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">configfile</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-constant">Errno</span><span class="ruby-operator">::</span><span class="ruby-constant">ENOENT</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;Config File &#39;tctb.config&#39; NOT FOUND&quot;</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">DEBUG</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+    </section>
+  
   </section>
 </main>
 
