@@ -142,12 +142,12 @@ compressed timeframe, 1 min == 1 sec</p>
       
         <dt id="STARTING_BTC">STARTING_BTC
         
-        <dd><p>How much BTC did the bot&#39;s account start with?</p>
+        <dd><p>How much BTC did the bot&#39;s account start with? (moving to config file)</p>
         
       
         <dt id="STARTING_USD">STARTING_USD
         
-        <dd>
+        <dd><p>How much USD did the bot&#39;s account start with? (moving to config file)</p>
         
       
         <dt id="VERSION">VERSION
@@ -193,7 +193,7 @@ directory</p>
 
           
           <div class="method-source-code" id="new-source">
-            <pre><span class="ruby-comment"># File tctb, line 36</span>
+            <pre><span class="ruby-comment"># File tctb, line 37</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">initialize</span>
         <span class="ruby-comment"># Signal Traps</span>
         <span class="ruby-constant">Signal</span>.<span class="ruby-identifier">trap</span>(<span class="ruby-string">&#39;INT&#39;</span>) {
@@ -275,13 +275,13 @@ directory</p>
 
         <div class="method-description">
           
-          
+          <p>Connect the object instance to its configured Cryptomnio account</p>
           
           
 
           
           <div class="method-source-code" id="connect_cryptomnio-source">
-            <pre><span class="ruby-comment"># File tctb, line 325</span>
+            <pre><span class="ruby-comment"># File tctb, line 331</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">connect_cryptomnio</span>
         <span class="ruby-comment"># Create Cryptomnio client object</span>
         <span class="ruby-identifier">cryptomnio</span> = <span class="ruby-constant">Cryptomnio</span><span class="ruby-operator">::</span><span class="ruby-constant">REST</span><span class="ruby-operator">::</span><span class="ruby-constant">Client</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">c</span><span class="ruby-operator">|</span>
@@ -335,13 +335,13 @@ directory</p>
 
         <div class="method-description">
           
-          
+          <p>Connect the object instance to its configured Twitter account</p>
           
           
 
           
           <div class="method-source-code" id="connect_twitter-source">
-            <pre><span class="ruby-comment"># File tctb, line 307</span>
+            <pre><span class="ruby-comment"># File tctb, line 312</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">connect_twitter</span>
         <span class="ruby-comment"># Get Twitter Handle from config</span>
         <span class="ruby-ivar">@twitter_handle</span> = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:username</span>]
@@ -382,13 +382,14 @@ directory</p>
 
         <div class="method-description">
           
-          
+          <p>Extract a leaderboard with &lt;entries&gt; number of users from
+timeframe&#39;s database</p>
           
           
 
           
           <div class="method-source-code" id="get_leaderboard-source">
-            <pre><span class="ruby-comment"># File tctb, line 231</span>
+            <pre><span class="ruby-comment"># File tctb, line 234</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">get_leaderboard</span>( <span class="ruby-identifier">timeframe</span>, <span class="ruby-identifier">entries</span> )
         <span class="ruby-keyword">case</span> <span class="ruby-identifier">timeframe</span>
                 <span class="ruby-keyword">when</span> <span class="ruby-value">:day</span>
@@ -433,7 +434,7 @@ directory</p>
 
           
           <div class="method-source-code" id="load_config-source">
-            <pre><span class="ruby-comment"># File tctb, line 107</span>
+            <pre><span class="ruby-comment"># File tctb, line 108</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_config</span>
         <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.config&#39;</span> )
         <span class="ruby-identifier">raise</span> <span class="ruby-string">&quot;Config File &#39;%s&#39; NOT FOUND&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span> <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
@@ -472,44 +473,44 @@ directory</p>
 
         <div class="method-description">
           
-          <p>TODO: Connect to Database for influencers and voting statistics fudge it
-with some hashes for now</p>
+          <p>Load the influencers databases from the filesystem</p>
           
           
 
           
           <div class="method-source-code" id="load_influencers-source">
             <pre><span class="ruby-comment"># File tctb, line 176</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_influencers</span>( <span class="ruby-identifier">filename</span> )
-        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">filename</span> )
-        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
-                <span class="ruby-comment"># File doesn&#39;t exist, initialize it</span>
-                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Warning: Influencers File &#39;%s&#39; NOT FOUND; Initializing&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
-                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
-                <span class="ruby-comment"># Write empty influencers hash to file</span>
-                <span class="ruby-identifier">influencers</span> = {}
-                <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span>) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">to_yaml</span> }
-                <span class="ruby-comment"># Return empty influencers hash</span>
-                <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
-        <span class="ruby-keyword">else</span>
-                <span class="ruby-comment"># Load influencers into a hash</span>
-                <span class="ruby-identifier">influencers</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span> ).<span class="ruby-identifier">read</span> )
-                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Loaded Influencers File &#39;%s&#39; (%d records)&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">filename</span>, <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">count</span> ] 
-                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
-                <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
-                        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;%s:&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
-                        <span class="ruby-identifier">pp</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">inspect</span>
+        <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_influencers</span>( <span class="ruby-identifier">filename</span> )
+<span class="ruby-comment"># TODO: Connect to Database for influencers and voting statistics</span>
+                <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">filename</span> )
+                <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
+                        <span class="ruby-comment"># File doesn&#39;t exist, initialize it</span>
+                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Warning: Influencers File &#39;%s&#39; NOT FOUND; Initializing&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
+                        <span class="ruby-comment"># Write empty influencers hash to file</span>
+                        <span class="ruby-identifier">influencers</span> = {}
+                        <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span>) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">to_yaml</span> }
+                        <span class="ruby-comment"># Return empty influencers hash</span>
+                        <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
+                <span class="ruby-keyword">else</span>
+                        <span class="ruby-comment"># Load influencers into a hash</span>
+                        <span class="ruby-identifier">influencers</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span> ).<span class="ruby-identifier">read</span> )
+                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Loaded Influencers File &#39;%s&#39; (%d records)&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">filename</span>, <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">count</span> ] 
+                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
+                        <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;%s:&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                                <span class="ruby-identifier">pp</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">inspect</span>
+                        <span class="ruby-keyword">end</span>
+                        <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
                 <span class="ruby-keyword">end</span>
-                <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
-        <span class="ruby-keyword">end</span>
-<span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
-        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Error: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
-        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
-        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
-        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
-        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
-        <span class="ruby-identifier">exit</span>
-<span class="ruby-keyword">end</span></pre>
+        <span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Error: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                <span class="ruby-identifier">exit</span>
+        <span class="ruby-keyword">end</span></pre>
           </div>
           
         </div>
@@ -533,13 +534,13 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          <p>Read YAML File for persistent state variables</p>
+          <p>Load YAML file for persistent state variables</p>
           
           
 
           
           <div class="method-source-code" id="load_state-source">
-            <pre><span class="ruby-comment"># File tctb, line 124</span>
+            <pre><span class="ruby-comment"># File tctb, line 125</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_state</span>
         <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.state&#39;</span> )
         <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
@@ -598,13 +599,13 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          
+          <p>Save the influencers databases to the filesystem</p>
           
           
 
           
           <div class="method-source-code" id="save_influencers-source">
-            <pre><span class="ruby-comment"># File tctb, line 207</span>
+            <pre><span class="ruby-comment"># File tctb, line 209</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">save_influencers</span>( <span class="ruby-identifier">timeframe</span>, <span class="ruby-identifier">influencers</span> )
         <span class="ruby-keyword">case</span> <span class="ruby-identifier">timeframe</span>
                 <span class="ruby-keyword">when</span> <span class="ruby-value">:day</span>
@@ -651,13 +652,13 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          <p>Save YAML File for persistent state variables</p>
+          <p>Save YAML file for persistent state variables</p>
           
           
 
           
           <div class="method-source-code" id="save_state-source">
-            <pre><span class="ruby-comment"># File tctb, line 161</span>
+            <pre><span class="ruby-comment"># File tctb, line 162</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">save_state</span>
         <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.state&#39;</span> )
         <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span> ) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-ivar">@persist</span>.<span class="ruby-identifier">to_yaml</span> }
@@ -693,13 +694,16 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          <p>Shutdown</p>
+          <p>Graceful Shutdown - Calls <a
+href="TCTBot.html#method-i-save_state">#save_state</a> and <a
+href="TCTBot.html#method-i-save_influencers">#save_influencers</a> for all
+influencer databases</p>
           
           
 
           
           <div class="method-source-code" id="shutdown-source">
-            <pre><span class="ruby-comment"># File tctb, line 88</span>
+            <pre><span class="ruby-comment"># File tctb, line 89</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">shutdown</span>
         <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Shutting down...&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
         <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
@@ -746,7 +750,7 @@ with some hashes for now</p>
 
           
           <div class="method-source-code" id="start-source">
-            <pre><span class="ruby-comment"># File tctb, line 357</span>
+            <pre><span class="ruby-comment"># File tctb, line 363</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">start</span>
 
         <span class="ruby-comment"># Connect Twitter</span>
@@ -1262,13 +1266,14 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          <p>Twitter update wrapper to add length checking and debug output</p>
+          <p>Twitter.update wrapper to add length checking and debug output. Tweets
+&lt;tweet&gt;, optionally in reply to &lt;in_reply_to_status_id&gt;</p>
           
           
 
           
           <div class="method-source-code" id="tweet-source">
-            <pre><span class="ruby-comment"># File tctb, line 248</span>
+            <pre><span class="ruby-comment"># File tctb, line 251</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-keyword">nil</span> )
         <span class="ruby-comment"># Check to ensure that the tweet isn&#39;t too long</span>
         <span class="ruby-keyword">if</span> <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">length</span> <span class="ruby-operator">&gt;</span> <span class="ruby-value">280</span>
@@ -1316,7 +1321,7 @@ with some hashes for now</p>
 
           
           <div class="method-source-code" id="update_balances-source">
-            <pre><span class="ruby-comment"># File tctb, line 268</span>
+            <pre><span class="ruby-comment"># File tctb, line 271</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">update_balances</span>
         <span class="ruby-comment"># Get individual balances from exchange</span>
         <span class="ruby-ivar">@btc_balance</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_balance_symbol</span>( <span class="ruby-string">&#39;btc&#39;</span> )
@@ -1360,13 +1365,13 @@ with some hashes for now</p>
 
         <div class="method-description">
           
-          
+          <p>Update Ticker (market price)</p>
           
           
 
           
           <div class="method-source-code" id="update_ticker-source">
-            <pre><span class="ruby-comment"># File tctb, line 289</span>
+            <pre><span class="ruby-comment"># File tctb, line 293</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">update_ticker</span>
         <span class="ruby-comment"># Get new ticker from exchange</span>
         <span class="ruby-ivar">@ticker</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_market_ticker</span>( <span class="ruby-string">&quot;btc_usd&quot;</span> )
