@@ -1,39 +1,30 @@
 #!/usr/bin/ruby
 
 # Requirements
-require 'syslog'
-require 'yaml'
-require 'twitter'
-require 'pp'
 require 'cryptomnio'
+require 'date'
+require 'pp'
+require 'syslog'
+require 'twitter'
+require 'yaml'
 
 # The application's Name
 APPNAME = "TCTBot"
 # The application's Version
-VERSION = "0.1.1"
+VERSION = "0.1.3"
+# The application's working directory within the user's home directory
+WORKING_DIR = Dir.home + '/.tctb/'
 # Debug output boolean
-DEBUG = true
+SPEEDMODE = true
+# Verbosity level
+VERBOSITY = 2
+# How much BTC did the bot's account start with?
+STARTING_BTC = 0.5
 
 # Global Variables Initialization
 $shutdown = false
-$minute = -1
+$minute = 1
 $dots = ""
-
-# Read YAML Configuration File into config data structure
-def read_config
-	configfile = YAML.load( File.open('tctb.config').read )
-	pp configfile.inspect if DEBUG
-	return configfile
-rescue Errno::ENOENT => e
-	puts "Config File 'tctb.config' NOT FOUND"
-	puts e.message
-	puts e.backtrace if DEBUG
-	exit
-end
-@configfile = read_config
-
-$twitter_handle = @configfile[:twitter][:username]
-# (twitter client keys)
 
 # Open Syslog
 Syslog.open(APPNAME, Syslog::LOG_CONS|Syslog::LOG_PID, Syslog::LOG_DAEMON)
@@ -41,125 +32,335 @@ Syslog.open(APPNAME, Syslog::LOG_CONS|Syslog::LOG_PID, Syslog::LOG_DAEMON)
 # Log application startup
 Syslog.info("%s v.%s Startup", APPNAME, VERSION)
 
+# Check for application home directory and create it if missing
+pathname = Pathname.new( WORKING_DIR )
+if ! pathname.exist?
+	# Create any missing path
+	Syslog.warning( "Working directory '%s' does not exist... creating." )
+	filename.mkpath
+end
+
+# Read YAML Configuration File into config data structure
+def load_config
+	filename = Pathname.new( WORKING_DIR + 'tctb.config' )
+	raise "Config File '%s' NOT FOUND" % filename if ! filename.exist?
+	configfile = YAML.load( File.open( filename ).read )
+	pp configfile.inspect if VERBOSITY >= 2
+	return configfile
+rescue Errno::ENOENT => e
+	message = "Config File '%s' NOT FOUND" % filename
+	Syslog.err( message )
+	puts message
+	puts e.message
+	puts e.backtrace if VERBOSITY >= 2
+	exit
+end
+@configfile = load_config
+
+# TODO: Connect to Database for influencers and voting statistics
+# fudge it with some hashes for now
+def load_influencers( filename )
+	filename = Pathname.new( WORKING_DIR + filename )
+	if ! filename.exist?
+		# File doesn't exist, initialize it
+		message = "Warning: Influencers File '%s' NOT FOUND; Initializing" % filename
+		Syslog.warning( message )
+		# Write empty influencers hash to file
+		influencers = {}
+		File.open(filename, 'w') {|f| f.write influencers.to_yaml }
+		# Return empty influencers hash
+		return influencers
+	else
+		# Load influencers into a hash
+		influencers = YAML.load( File.open( filename ).read )
+		message = "Loaded Influencers File '%s' (%d records)" % [ filename, influencers.count ] 
+		Syslog.info( message )
+		if VERBOSITY >= 2
+			puts "%s:" % filename
+			pp influencers.inspect
+		end
+		return influencers
+	end
+rescue => e
+	message = "Error: %s" % e.message
+	Syslog.err( message )
+	puts message
+	puts e.message
+	puts e.backtrace if VERBOSITY >= 2
+	exit
+end
+@influencers_day   = load_influencers('influencers_day.dat')
+@influencers_week  = load_influencers('influencers_week.dat')
+@influencers_month = load_influencers('influencers_month.dat')
+@influencers_all   = load_influencers('influencers_all.dat')
+
+def save_influencers( timeframe, influencers )
+	case timeframe
+		when :day
+			filename = Pathname.new( WORKING_DIR + 'influencers_day.dat' )
+		when :week
+			filename = Pathname.new( WORKING_DIR + 'influencers_week.dat' )
+		when :month
+			filename = Pathname.new( WORKING_DIR + 'influencers_month.dat' )
+		else
+			filename = Pathname.new( WORKING_DIR + 'influencers_all.dat' )
+	end
+
+	File.open(filename, 'w') {|f| f.write influencers.to_yaml }
+
+	return influencers.count # success: return # of entries saved
+end
+
+def get_leaderboard( timeframe, entries )
+	case timeframe
+		when :day
+			hash = @influencers_day
+		when :week
+			hash = @influencers_week
+		when :month
+			hash = @influencers_month
+		else
+			hash = @influencers_all
+	end
+
+	leaders = hash.sort_by {|key, value| value }.reverse
+	return leaders[0..4]
+end
+
 # Create Twitter Client Object
+@twitter_handle = @configfile[:twitter][:username]
 @twitter = Twitter::REST::Client.new do |c|
 	c.consumer_key        = @configfile[:twitter][:consumer_key]
 	c.consumer_secret     = @configfile[:twitter][:consumer_secret]
 	c.access_token        = @configfile[:twitter][:access_token]
 	c.access_token_secret = @configfile[:twitter][:access_token_secret]
 end
+Syslog.info( "Operating as Twitter handle %s" % @twitter_handle )
 
 # Create Cryptomnio Client Object
 cryptomnio = Cryptomnio::REST::Client.new do |c|
 	c.config = {
 		# API Endpoint URL
-		apiurl: @configfile[:cryptomnio][:apiurl],
+		api_host_core: @configfile[:cryptomnio][:api_host_core],
+		api_host_cma:  @configfile[:cryptomnio][:api_host_cma],
 		# Authentication
-      authtype: "Basic",
-      username: @configfile[:cryptomnio][:username],
-      password: @configfile[:cryptomnio][:password],
-      apikeys:  []
+      authtype:   @configfile[:cryptomnio][:authtype],
+      access_key: @configfile[:cryptomnio][:access_key],
+      secret_key: @configfile[:cryptomnio][:secret_key],
+		# Venue Contexts
+		contexts: []
    }
-
-	# Exchange API Keys
-	@configfile[:cryptomnio][:apikeys].each do |key|
-		c.config[:apikeys].push({
-			exchange:   key[:exchange],
-			key:        key[:key],
-			secret:     key[:secret],
-			clientid:   key[:clientid],
-			passphrase: key[:passphrase]
-		})
-	end
+	# Context (venue + account)
+	c.config[:contexts] = {
+		bitstamp: {
+			venue:      @configfile[:cryptomnio][:exchange],
+			accountid:  @configfile[:cryptomnio][:accountid],
+			venuekeyid: @configfile[:cryptomnio][:venuekeyid]
+		}
+	}
 end
 
-# Authenticate Cryptomnio
-cryptomnio.auth_basic
+# Shorter variable names for frequently used config
+@exchange = @configfile[:cryptomnio][:exchange]
 
-# Check for valid stored key and upload keys from config if there are none
-keys = cryptomnio.get_all_exchange_keys
-if keys.size < 1
-	cryptomnio.upload_api_keys
-else
-	@ckey = keys[0]
-end
-
-# Populate Wallets Hash
-@wallet_balances = cryptomnio.wallet_get( @ckey )
-Syslog.info("Wallet Balances at startup: BTC: %s | USD: $%s", @wallet_balances["btc"]["amount"], @wallet_balances["usd"]["amount"]) 
+# Populate initial balances
+@btc_balance = cryptomnio.retrieve_venue_account_balance_symbol( "btc" )
+@usd_balance = cryptomnio.retrieve_venue_account_balance_symbol( "usd" )
+Syslog.info("Account Balances at startup: BTC: %s | USD: $%s", @btc_balance, @usd_balance ) if VERBOSITY >= 1 
 
 # Retireve most recent tweet (index 0 of returned Enumerable)
-lasttweet = @twitter.user_timeline($twitter_handle, count: 1)[0]
-Syslog.info("Most recent %s tweet at startup: \"%s...\"", $twitter_handle, lasttweet.text[0,26])
+# TODO: Find most recent POLL tweet, not just the most recent one (which may not be the poll)
+lasttweet = @twitter.user_timeline(@twitter_handle, count: 1)[0]
+Syslog.info("Most recent %s tweet at startup: \"%s...\"", @twitter_handle, lasttweet.text[0,26]) if VERBOSITY >= 1
 
-# Timing Loop
+# Twitter update wrapper to add length checking and debug output
+def tweet(tweet, in_reply_to_status_id: nil)
+	if tweet.length > 280
+		message = "Error: Poll tweet too long! (%d characters)" % tweet.length
+		Syslog.err( message )
+		raise message
+	end
+	puts "Tweeting:\n'''\n%s\n'''" % tweet if VERBOSITY >= 1
+	return @twitter.update( tweet, in_reply_to_status_id: in_reply_to_status_id ) 
+end
+
+# Time variable initializations
+@time        = Time.now
+$lastmin   ||= @time.min
+$lastmonth ||= @time.month
+
+# Scheduler Loop
 while $shutdown != true
 	loop do	
-		time = Time.now
-		lastminute = $minute
-		if ! DEBUG
-			$minute = time.min
+		# Don't iterate too fast unless we're in SPEEDMODE mode
+		sleep 1 if ! SPEEDMODE
+
+		# Get current time
+		@time = Time.now
+
+		# Save current values for conditionals later or initialize them as current
+		$minute ? $lastminute = $minute : $minute = @time.min
+		$month  ? $lastmonth  = $month  : $month  = @time.month
+
+		# Check what minute of the hour it is
+		if ! SPEEDMODE
+			# Get the current minute if not in SPEEDMODE mode
+			$second = @time.sec
+			$minute = @time.min
+			$hour   = @time.hour
+			$day    = @time.day
+	  		$month  = @time.month
+			if VERBOSITY >= 3
+				puts "Month:  %s" % $month
+				puts "Day:    %s" % $day
+				puts "Hour:   %s" % $hour
+				puts "Minute: %s" % $minute
+			end
 		else
+			# Speed through minutes (1 per second) in SPEEDMODE mode
 			sleep 1
 			$minute += 1
 			$minute = 0 if $minute == 60 
 		end
 
+		##
 		# Scheduler
+
+		# On the Month
+		case
+			when $month != $lastmonth # Month Change!
+				leaders = get_leaderboard( :month, 5 )
+
+				tweet = "%s's Top 5 Monthly Influencers:\n\n" % @twitter_handle
+				count = 0
+				leaders.each do |handle, votecount|
+					count += 1
+					tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+				end
+				tweet( tweet )
+
+				# TODO: Rotate and save the monthly influencer's file for record
+
+				# Reset the influencers count
+				@influencers = {}
+				save_influencers( :month, @influencers )
+
+				# TODO: Have the bot calculate monthly profits and distribute profits to the monthly leaderboard if they have registered a Bitcoin Address
+			else
+		end
+
+		# On the Week
+		case
+			when @time.sunday? && $hour == 00 & $minute = 00
+				leaders = get_leaderboard( :week, 5 )
+				
+				tweet = "%s's Top 5 Weekly Influencers:\n\n" % @twitter_handle
+				count = 0
+				leaders.each do |handle, votecount|
+					count += 1
+					tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+				end
+				tweet( tweet )
+
+				# Reset the influencers count
+				@influencers = {}
+				save_influencers( :week, @influencers )
+
+				sleep 60
+		end
+
+		# On the Hour
+		case
+			when $hour == 23 && $minute == 50 # Just before Midnight
+				leaders = get_leaderboard( :day, 5 )
+
+				tweet  = "%s's Top 5 Daily Influencers:\n" % @twitter_handle
+				count = 0
+				leaders.each do |handle, votecount|
+					count += 1
+					tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+				end
+				tweet( tweet )
+
+				# Reset the influencers count
+				@influencers = {}
+				save_influencers( :day, @influencers )
+
+				sleep 60
+		end
+
+		# On the Minute
 		case $minute
 
-		when 0 # Post a new Poll
-			# Refresh Wallet Balances
-			@wallet_balances = cryptomnio.wallet_get( @ckey )
+		when 00 # Minute 00: Post a new Poll
+			# Refresh Account Balances
+			@btc_balance = cryptomnio.retrieve_venue_account_balance_symbol( "btc" )
+			@usd_balance = cryptomnio.retrieve_venue_account_balance_symbol( "usd")
 
+			# Get current ticker spot price
+			@ticker = cryptomnio.retrieve_venue_market_ticker( "btc_usd" )
+				
 			# Generate a new Poll ID
-			$pollid = "%d%02d%02d%02d" % [time.year, time.month, time.day, time.hour]
-			$pollid = $pollid.to_i
-			Syslog.info("Posting a new poll! (ID: %d)", $pollid)
-			tweet = "Poll %d: Should I BUY, SELL, or HODL? (BTC: %s | USD: \$%s) (Reply to this tweet with one of the keywords BUY, SELL, or HODL. The Twitter API does not yet support polls. Most recent message counts as your vote, multiple keywords ignored.)" % [ $pollid, @wallet_balances["btc"]["amount"], @wallet_balances["usd"]["amount"] ]
+			@pollid = "%d%02d%02d%02d" % [@time.year, @time.month, @time.day, @time.hour]
+			@pollid = @pollid.to_i
+
+			# Post the new poll
+			Syslog.info( "Posting a new poll! (ID: %d)", @pollid ) if VERBOSITY >= 1
+			tweet = "Poll %d: Should I BUY, SELL, or HODL?\n\nCurrent BTC/USD Spot: $%s\n\nBalances:\nBTC: %s\nUSD: \$%s\n\nReply with one keyword: BUY, SELL, or HODL. Most recent reply is your vote (so you can change your mind), multiple keywords in one reply ignored" % [ @pollid, @ticker['price'], @btc_balance, @usd_balance ]
 			if tweet.length > 280
-				Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
-			end
-			puts tweet if DEBUG
-#			@twitter.update(tweet)
-#			sleep 60
-
-		when 03 #55 # Close the Poll
-			# Retrieve most recent tweet
-			$tweets = @twitter.user_timeline($twitter_handle, count: 1)
-			$lasttweet = $tweets[0]
-			Syslog.info("Retrieved most recent %s tweet (poll): \"%s...\"", $twitter_handle, $lasttweet.text[0,26])
-
-			#Extract the Poll ID
-			$pollid = $lasttweet.text[/\b(?<!\.)\d+(?!\.)\b/, 0]
-			if ! $pollid
-				Syslog.err("Unable to retrieve Poll ID from most recent tweet! %s", $pollid.inspect)
+				Syslog.err( "Error: Poll tweet too long! (%d characters)", tweet.length )
+				puts "Tweet:\n%s" % tweet if VERBOSITY >= 2
 				break
 			end
+			puts tweet if VERBOSITY >= 2
+			$lasttweet = tweet(tweet)
 
-			Syslog.info("Closing Poll %s", $pollid)
+			# Finished with this minute's operation... sleep to ensure this doesn't get called again this hour
+			sleep 60
+
+		when 55 # Minute 55: Close the Poll
+			# Retrieve most recent tweet, *should* be the last poll posted
+			if ! $lasttweet
+				$tweets = @twitter.user_timeline(@twitter_handle, count: 1)
+				$lasttweet = $tweets[0]
+				Syslog.info( "Retrieved most recent %s tweet (poll): \"%s...\"", @twitter_handle, $lasttweet.text[0,26] ) if VERBOSITY >= 1
+			end
+
+			# Extract the Poll ID from the tweet
+			@pollid = $lasttweet.text[/\b(?<!\.)\d+(?!\.)\b/, 0]
+			if ! @pollid
+				# Couldn't get the Poll ID, sleep past this minute and break
+				Syslog.err( "Unable to retrieve Poll ID from most recent tweet! %s", @pollid.inspect )
+				sleep 60
+				break
+			end
+			@pollid = @pollid.to_i
+
+			Syslog.info( "Closing Poll %s", @pollid ) if VERBOSITY >= 1
 			if $lasttweet
 				# Get all replies to the account after our poll tweet
-				query = "to:%s" % $twitter_handle
-				reply_tweets = @twitter.search(query, since_id: lasttweet.id, result_type: "recent")
-				#p reply_tweets if DEBUG
-				Syslog.debug("Got %d replies to user.", reply_tweets.count) if DEBUG
+				query = "to:%s" % @twitter_handle
+				reply_tweets = @twitter.search(query, since_id: $lasttweet.id, result_type: "recent")
+				#p reply_tweets if VERBOSITY >= 3
+				Syslog.debug( "Got %d replies to user." % reply_tweets.count ) if VERBOSITY >= 1
+				Syslog.warning( "WARNING: Got %d replies to user, possibly more than 100 votes!" % reply_tweets.count ) if reply_tweets.count >= 100
 				# TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.
 
 				# Find subset of replies that replied directly to our poll tweet
 				replies = []
 				index = 0
 				for tweet in reply_tweets do
-					if tweet.in_reply_to_status_id == lasttweet.id
+					if tweet.in_reply_to_status_id == $lasttweet.id
 						replies[index] = tweet
 						index += 1
 					end
 				end
+
 				# Reverse order so that tweets are in chronological order
 				replies = replies.reverse
 
-				Syslog.debug("Got %d replies to poll.", replies.size) if DEBUG
-				if DEBUG
+				Syslog.debug("Got %d replies to poll.", replies.count) if VERBOSITY >= 1
+				if VERBOSITY >= 1 
 					for tweet in replies do
 						Syslog.debug("%s said: \"%s\"", tweet.user.screen_name, tweet.text)
 					end
@@ -172,31 +373,34 @@ while $shutdown != true
 					tweet.text =~ /buy/i  ? buy  = true  : buy  = false 
 					tweet.text =~ /sell/i ? sell = true  : sell = false 
 					tweet.text =~ /hodl/i ? hodl = true  : hodl = false 
+					tweet.text =~ /hodl/i ? hold = true  : hodl = false 
 					# Ensure that the tweet only contains one keyword
 					if [buy, sell, hodl].one?
 						# Add the voted keyword to the votes hash. Most recent vote per user will be counted.
 						votes[tweet.user.screen_name] = "BUY"  if buy  == true
 						votes[tweet.user.screen_name] = "SELL" if sell == true
 						votes[tweet.user.screen_name] = "HODL" if hodl == true
+						votes[tweet.user.screen_name] = "HOLD" if hodl == true
 					end
 				end              
-				Syslog.debug("Got %d votes in poll.", votes.size) if DEBUG
-				#p votes if DEBUG
-				if DEBUG
+				Syslog.debug("Got %d votes in poll.", votes.size) if VERBOSITY >= 1
+				if VERBOSITY >= 1
 					votes.each do |name, vote|
 						Syslog.debug("%s voted: \"%s\"", name, vote)
 					end
 				end
 
-				# Check if we have our minimum threshold of votes. Default to HODL if 
-				if votes.size < 1 #10
-					Syslog.info("Only received %d votes (< 10), HODL!", votes.size)
-					#@twitter.update("Hourly voting closed.  Not enough votes to make a decision.  HODL!!! (Need minimum 10 votes... Maybe you should retweet my poll tweet?)") 
+				# Check if we have our minimum threshold of votes. Default to HODL if not
+# TODO: temp min is 1
+				if votes.count < 1 #10
+					Syslog.info( "Only received %d votes (minimum 1), HODL!", votes.count )
+					tweet = "Voting closed for poll %d.\n\nNot enough votes to make a decision.  HODL!!!\n\n(Need minimum 1 vote, got %d votes... Maybe you should retweet my poll tweet?)" % [ @pollid, votes.count ]
+					$lasttweet = tweet( tweet, in_reply_to_status_id: $lasttweet.id ) 
 					$decision = "HODL"
 				else
 					# We have enough votes!  Make some trades...
-					Syslog.info("Enough votes tallied, making a decision!")
-					# TODO: Determine which keyword won the vote and set the decision variable
+					Syslog.info( "Enough votes received, tallying the votes to make a decision!" )
+					# Tally the votes
 					tally = {}
 					tally[:buy]  = 0
 					tally[:sell] = 0
@@ -205,16 +409,39 @@ while $shutdown != true
 						tally[:buy]  += 1 if vote == "BUY"
 						tally[:sell] += 1 if vote == "SELL"
 						tally[:hodl] += 1 if vote == "HODL"
+						# Add a vote to the name's influencers score
+						@influencers_day[name]   ? @influencers_day[name]   += 1 : @influencers_day[name] 	= 1
+						@influencers_week[name]  ? @influencers_week[name]  += 1 : @influencers_week[name] 	= 1
+						@influencers_month[name] ? @influencers_month[name] += 1 : @influencers_month[name] = 1
+						@influencers_all[name]   ? @influencers_all[name]   += 1 : @influencers_all[name] 	= 1
 					end
+					# Calculate relative percentages of each position
+					@buy_percentage  = (tally[:buy].to_f  / votes.count) * 100 
+					@sell_percentage = (tally[:sell].to_f / votes.count) * 100
+					@hodl_percentage = (tally[:hodl].to_f / votes.count) * 100
+					if VERBOSITY >= 1
+						puts "BUY percentage:  %0.2f%%" % @buy_percentage
+						puts "SELL percentage: %0.2f%%" % @sell_percentage
+						puts "HODL percentage: %0.2f%%" % @hodl_percentage
+					end
+
+					# Save the updated influencers data
+					save_influencers( :day,   @influencers_day )
+					save_influencers( :week,  @influencers_week )
+					save_influencers( :month, @influencers_month )
+					save_influencers( :all,   @influencers_all )
+
 					# Find the largest number in the tally hash and return the associated key(s)
 					winner = tally.reduce({}){|h,(k,v)| (h[v] ||= []) << k;h}.max
 					# There can be only one:
 					$decision = "HODL" #default
 					if winner[1].count > 1
 						# Tie!  HODL...
-						message = "Result of the poll was a tie! I'm gonna %s. (%d BUY | %d SELL | %d HODL)" % [$decision, tally[:buy], tally[:sell], tally[:hodl]]
+						message = "Result of Poll %d was a tie! I'm gonna %s. Vote Tally: [ BUY:  %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
 						Syslog.info(message)
-						@twitter.update(message) if ! DEBUG
+
+						tweet = "Result of the poll was a tie! I'm gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
+						$lasttweet = tweet(tweet, in_reply_to_status_id: $lasttweet.id)
 					else
 						# Winner!
 						$decision = "BUY"  if winner[1][0] == :buy
@@ -222,84 +449,185 @@ while $shutdown != true
 						$decision = "HODL" if winner[1][0] == :hodl
 
 						# Post poll results
-						message = "The results for Poll %d are in! %s is the winner! (%d BUY | %d SELL | %d HODL)" % [$pollid, $decision, tally[:buy], tally[:sell], tally[:hodl]]
-						Syslog.info(message)
-						@twitter.update(message) if ! DEBUG
+						message = "The results for Poll %d are in! %s is the winner! Vote Tally: [ BUY: %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
+						puts message
+						Syslog.info( message.to_s )
+
+						tweet = "The results for Poll %d are in!\n\n%s is the winner!\n\nVote Tally:\nBUY: %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
+						$lasttweet = tweet(tweet, in_reply_to_status_id: $lasttweet.id)
 					end
 
 				end
 			end
 
 			# Execute desired trade via Cryptomnio
-			Syslog.info("Executing trades via Cryptomnio...")
 			case $decision
 			when "BUY"
-				# Determine 10% of USD
-				balance = @wallet_balances["usd"]["amount"].to_f
-				$amount  = balance * 0.1
-				# TODO: Determine BTC value of USD
-				$volume = 0
+				Syslog.info("Executing MARKET BUY order via Cryptomnio...")
+
+				# Determine @usd_percentage % of USD
+				balance = @usd_balance.to_f 
+				$amount  = balance * (@buy_percentage / 100)
+
+				# Get current ticker spot price
+				@ticker = cryptomnio.retrieve_venue_market_ticker( "btc_usd" )
+				message = "Current spot price for BTC/USD on %s: \$%s" % [ @exchange, @ticker['price']]
+				Syslog.info(message)
+				
+				# Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )
+				$volume = ($amount / @ticker['price'].to_f).round(8)
+
+				# Sanity check volume to make sure it's not below minimum exchange trade limits
+				if $volume < 0.003
+					message = "Attemtped BUY of %0.8f (%0.2f%%%%) BTC is below Bitstamp's minimum order volume limit (0.003 BTC). Gotta HODL!!!" % [ $volume, @buy_percentage ]
+					Syslog.info(message)
+					
+					tweet = "Attempted BUY of %0.8f (%0.2f%%) BTC is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage ]
+					$lasttweet = tweet(tweet, in_reply_to_status_id: $lasttweet.id)
+
+					break
+				end
+
 				# Place BID order
-				message = "BUYing %0.8f BTC (10 percent of \$%s USD) at MARKET" % [ $volume, balance ]
+				message = "BUYing %0.8f BTC (%0.2f percent of $%0.2f USD) at MARKET" % [ $volume, @buy_percentage, balance ]
 				Syslog.info(message)
-@order_id = 3 if DEBUG
-				$order_id = cryptomnio.order_create( @ckey, "buy", "MARKET", "btc_usd", $volume ) if ! DEBUG
+				$order_id = cryptomnio.create_venue_account_order_market( "buy", $volume, "btc_usd" )
+# Fudge an order_id
+#$order_id = "dff45c62-8c7b-441f-ad6e-9ca8d8b7ff36"
+
+				# Get Order Info
+				sleep 3
+				$order_info = cryptomnio.retrieve_venue_account_order( $order_id )
+				message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
+				Syslog.info(message)
+
 			when "SELL"
-				# Determine 10% of BTC
-				balance = @wallet_balances["btc"]["amount"].to_f
-				$volume = balance * 0.1
+				Syslog.info("Executing MARKET SELL order via Cryptomnio...")
+
+				# Calculate volume to sell ( @sell_percentage % of BTC balance rounded to 8 decimal places )
+				balance = @btc_balance.to_f
+				$volume = (balance * (@sell_percentage / 100)).round(8)
+
+				# Sanity check volume to make sure it's not below minimum exchange trade limits
+				if $volume < 0.003
+					message = "Attemtped SELL of %0.8f (%0.2f%%%%) BTC is below Bitstamp's minimum order volume limit (0.003 BTC).  Gotta HODL!!!" % [ $volume, @sell_percentage ]
+					Syslog.info(message)
+					
+					tweet = "Attempted SELL of %0.8f (%0.2f%%) BTC is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @sell_percentage ]
+					$lasttweet = tweet(tweet, in_reply_to_status_id: $lasttweet.id)
+
+					break
+				end
+
 				# Place ASK order
-				message = "SELLing %0.8f BTC (10 percent of %s BTC) at MARKET" % [ $volume, balance ] 
+				message = "SELLing %0.8f BTC (%0.2f percent of %s BTC) at MARKET" % [ $volume, @sell_percentage, balance ] 
 				Syslog.info(message)
-@order_id = 3 if DEBUG
-				$order_id = cryptomnio.order_create( @ckey, "sell", "MARKET", "btc_usd", $volume ) if ! DEBUG
+				$order_id = cryptomnio.create_venue_account_order_market( "sell", $volume, "btc_usd" )
+# Fudge an order_id
+#$order_id = "7b7655dc-6942-46d7-beb3-d6362697b043"
+
+				# Get Order Info
+				sleep 3
+				$order_info = cryptomnio.retrieve_venue_account_order( $order_id )
+				message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
+				Syslog.info(message)
+
 			else
 				# HODL
 				$order_id = nil
 			end
 
 			if $order_id
+				message = "Checking Cryptomnio order %s" % $order_id
+				Syslog.info(message) if VERBOSITY >= 2
+
 				# Wait until order clears
-# TODO: Cryptomnio bug, order status isn't updating
-#				loop do
-#					sleep 1
-#					order_info = cryptomnio.order_get( @ckey, @order_id )
-#
-#					break if order_info["status"] != "open"
-#				end
+				while $order_info['venueStatus'].downcase != 'filled' do
+					if $order_info['venueStatus'].downcase == 'cancelled'
+						message = "Order %s cancelled by exchange!"
+						Syslog.err( message )
+						break
+					end
+					Syslog.info( "Waiting for order %s to clear..." % $order_id )
+					sleep 3
+					$order_info = cryptomnio.retrieve_venue_account_order( $order_id )
+				end
 
-				# Fudge an order check; assume it clears in under 10 seconds
-				sleep 10
+				# Get current ticker spot price
+				@ticker = cryptomnio.retrieve_venue_market_ticker( "btc_usd" )
 
-				# Refresh Wallet Balances
-				@wallet_balances = cryptomnio.wallet_get( @ckey )
-				$balance_btc = @wallet_balances["btc"]["amount"].to_f
-				$balance_usd = @wallet_balances["usd"]["amount"].to_f
+				# TODO: Get USD value of trade from trade result.  For now, we calculate it ourselves:
+				usd_value = ( $order_info['quantity'].to_f * @ticker['price'].to_f ).round(2)
 
 				# Post trade results
-				Syslog.info("Posting trade results...")
+				Syslog.info("Tweeting trade results...")
 				case $decision
 				when "BUY"
-					tweet = "Trade Complete: BUY 10\% of USD: %0.8d BTC ($%0.2d USD)\nTrading fee: %0.02\nAccount Balances:\n\tBTC: %0.8d\n\tUSD: $%0.2d" % [ @order_info["volume"], usd_value, @order_info["fee"], $balance_btc, $balance_usd ]
+					tweet  = "Trade on Bitstamp Complete:\n\n"
+					tweet << "BUY 10%% of USD ($%0.2f USD): %s BTC\n" % [ $order_info["quantity"], usd_value ]
+					tweet << "Trading fee: $%0.2f\n\n"     % $order_info["fee"].to_f
+					tweet << "Trade powered by @Cryptomnio"
 				when "SELL"
-					tweet = "Trade Complete: SELL 10\% of BTC: %0.8d BTC ($%0.2d USD, 10% of BTC)\nTrading fee: %0.02\nAccount Balances:\n\tBTC: %0.8d\n\tUSD: $%0.2d" % [ @order_info["volume"], usd_value, @order_info["fee"], $balance_btc, $balance_usd ]
+					tweet  = "Trade on Bitstamp Complete:\n\n"
+					tweet << "SELL 10%% of BTC: %s BTC ($%0.2f USD)\n" % [$order_info["quantity"], usd_value ]
+					tweet << "Trading fee: $%0.2f\n\n" % $order_info["fee"].to_f
+					tweet << "Trade powered by @Cryptomnio"
 				end
 				if tweet.length > 280
 					Syslog.err("Error: Poll tweet too long! (%d characters", tweet.length)
 				end
-				puts tweet if DEBUG
-#				@twitter.update(tweet)
+				puts tweet if VERBOSITY >= 1
+				$lasttweet = tweet(tweet, in_reply_to_status_id: $lasttweet.id)
+
+				# Sleep for a few seconds so balances can update via the exchange
+				sleep 15
+
+				# Refresh Account Balances
+				@btc_balance_previous = @btc_balance
+				@btc_balance = cryptomnio.retrieve_venue_account_balance_symbol( "btc" )
+				puts "BTC Balance: %s" % @btc_balance if VERBOSITY >= 2
+				@usd_balance_previous = @usd_balance
+				@usd_balance = cryptomnio.retrieve_venue_account_balance_symbol( "usd" )
+				puts "USD Balance: %s" % @usd_balance if VERBOSITY >= 2
+
+				# Calculate change in balances due to most recent trade
+				$btc_diff_value   = @btc_balance - @btc_balance_previous
+				$btc_diff_percent = ($btc_diff_value / @btc_balance) * 100 
+				$usd_diff_value   = @usd_balance - @usd_balance_previous
+				$usd_diff_percent = ($usd_diff_value / @usd_balance) * 100 
+
+				# Calculate total account value in both BTC and USD
+				$btc_total = @btc_balance + ( @usd_balance / @ticker['price'].to_f )
+				puts "BTC Account Value: %s" % @btc_total if VERBOSITY >= 2
+				$usd_total = @usd_balance + ( @btc_balance * @ticker['price'].to_f )
+				puts "USD Account Value: %s" % @usd_total if VERBOSITY >= 2
+
+				# Calculate change in total account value
+				$btc_start_diff_value   = $btc_total - STARTING_BTC
+				$btc_start_diff_percent = ($btc_start_diff_value / $btc_total) * 100
+				$usd_start_diff_value   = $usd_total - (STARTING_BTC * @ticker['price'].to_f) + $usd_total
+				$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
+
+				# Post Balances Tweet
+				tweet  = "Account Balances after trade:\n\n"
+				tweet << "BTC: %0.8f (%+0.8f / %+0.2f%%)\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
+				tweet << "USD: $%0.2f ($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
+				tweet << "Total Account Value:\n"
+				tweet << "BTC: %0.8f (%+0.8f / %+0.2f%%)\n"     % [ $btc_total, $btc_start_diff_value, $btc_start_diff_percent ]
+				tweet << "USD: $%0.2f (%+0.2f / %+0.2f%%)\n\n"  % [ $usd_total, $usd_start_diff_value, $usd_start_diff_percent ]
+				tweet << "Current BTC/USD Spot: $%s"            % @ticker['price']
+				$lasttweet = tweet( tweet, in_reply_to_status_id: $lasttweet.id )
 			end
 
-
-			sleep 60 if ! DEBUG
+			# Wait at least one minute since last operation
+			sleep 60 if ! SPEEDMODE
 		else
-			if lastminute != $minute
+			if $lastminute != $minute
 				$dots = ""
 			else
-				$dots = $dots + "."
+				$dots << "."
 			end
-			printf("\rWaiting until minute 55... (Current minute: %02d) %s", $minute, $dots)
+			printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", $minute, $dots)
 			STDOUT.flush
 			sleep 0.05
 		end
