@@ -3,17 +3,17 @@
 # Twitter Configuration
 :twitter:
   :username: MyTwitterName
-  :consumer_key: API_KEY
-  :consumer_secret: API_SECRET
-  :access_token: ACCESS_TOKEN
-  :access_token_secret: ACCESS_TOKEN_SECRET
+  :consumer_key: <API_KEY>
+  :consumer_secret: <API_SECRET>
+  :access_token: <ACCESS_TOKEN>
+  :access_token_secret: <ACCESS_TOKEN_SECRET>
 # Cryptomnio Configuration
 :cryptomnio:
-  :apiurl: https://api.my-username-uat.cryptomnio.com
-  :username: user
-  :password: pass
-  :apikeys:
-  - :exchange: bitstamp
-    :key: BITSTAMP_API_KEY
-    :secret: BITSTAMP_API_SECRET
-    :clientid: '12345'
+  :api_host_core: api.<yourhost>.dev.cryptomnio.com
+  :api_host_cma: cma.<yourhost>.dev.cryptomnio.com
+  :authtype: Cryptomnio
+  :access_key: <access_key_string>
+  :secret_key: <secret_key_string>
+  :exchange: <exchange_id>
+  :accountid: <cryptomnio_account_id>
+  :venuekeyid: <cryptomnio_venue_key_id>
