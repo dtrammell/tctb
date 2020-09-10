@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta charset="UTF-8">
+
+<title>class TCTBot - RDoc Documentation</title>
+
+<script type="text/javascript">
+  var rdoc_rel_prefix = "./";
+  var index_rel_prefix = "./";
+</script>
+
+<script src="./js/jquery.js"></script>
+<script src="./js/darkfish.js"></script>
+
+<link href="./css/fonts.css" rel="stylesheet">
+<link href="./css/rdoc.css" rel="stylesheet">
+
+
+
+<body id="top" role="document" class="class">
+<nav role="navigation">
+  <div id="project-navigation">
+    <div id="home-section" role="region" title="Quick navigation" class="nav-section">
+  <h2>
+    <a href="./index.html" rel="home">Home</a>
+  </h2>
+
+  <div id="table-of-contents-navigation">
+    <a href="./table_of_contents.html#pages">Pages</a>
+    <a href="./table_of_contents.html#classes">Classes</a>
+    <a href="./table_of_contents.html#methods">Methods</a>
+  </div>
+</div>
+
+    <div id="search-section" role="search" class="project-section initially-hidden">
+  <form action="#" method="get" accept-charset="utf-8">
+    <div id="search-field-wrapper">
+      <input id="search-field" role="combobox" aria-label="Search"
+             aria-autocomplete="list" aria-controls="search-results"
+             type="text" name="search" placeholder="Search" spellcheck="false"
+             title="Type to search, Up and Down to navigate, Enter to load">
+    </div>
+
+    <ul id="search-results" aria-label="Search Results"
+        aria-busy="false" aria-expanded="false"
+        aria-atomic="false" class="initially-hidden"></ul>
+  </form>
+</div>
+
+  </div>
+
+  
+
+  <div id="class-metadata">
+    
+    <div id="parent-class-section" class="nav-section">
+  <h3>Parent</h3>
+
+  
+  <p class="link"><a href="Object.html">Object</a>
+  
+</div>
+
+    
+    
+    <!-- Method Quickref -->
+<div id="method-list-section" class="nav-section">
+  <h3>Methods</h3>
+
+  <ul class="link-list" role="directory">
+    
+    <li ><a href="#method-c-new">::new</a>
+    
+    <li ><a href="#method-i-connect_cryptomnio">#connect_cryptomnio</a>
+    
+    <li ><a href="#method-i-connect_twitter">#connect_twitter</a>
+    
+    <li ><a href="#method-i-get_leaderboard">#get_leaderboard</a>
+    
+    <li ><a href="#method-i-load_config">#load_config</a>
+    
+    <li ><a href="#method-i-load_influencers">#load_influencers</a>
+    
+    <li ><a href="#method-i-load_state">#load_state</a>
+    
+    <li ><a href="#method-i-save_influencers">#save_influencers</a>
+    
+    <li ><a href="#method-i-save_state">#save_state</a>
+    
+    <li ><a href="#method-i-shutdown">#shutdown</a>
+    
+    <li ><a href="#method-i-start">#start</a>
+    
+    <li ><a href="#method-i-tweet">#tweet</a>
+    
+    <li ><a href="#method-i-update_balances">#update_balances</a>
+    
+    <li ><a href="#method-i-update_ticker">#update_ticker</a>
+    
+  </ul>
+</div>
+
+  </div>
+</nav>
+
+<main role="main" aria-labelledby="class-TCTBot">
+  <h1 id="class-TCTBot" class="class">
+    class TCTBot
+  </h1>
+
+  <section class="description">
+    
+<p><a href="TCTBot.html">TCTBot</a> Class</p>
+
+  </section>
+
+  
+  <section id="5Buntitled-5D" class="documentation-section">
+    
+
+    
+
+    
+    <section class="constants-list">
+      <header>
+        <h3>Constants</h3>
+      </header>
+      <dl>
+      
+        <dt id="APPNAME">APPNAME
+        
+        <dd><p>The application&#39;s Name</p>
+        
+      
+        <dt id="SPEEDMODE">SPEEDMODE
+        
+        <dd><p><a href="TCTBot.html#SPEEDMODE">SPEEDMODE</a> causes the bot to run in a
+compressed timeframe, 1 min == 1 sec</p>
+        
+      
+        <dt id="STARTING_BTC">STARTING_BTC
+        
+        <dd><p>How much BTC did the bot&#39;s account start with?</p>
+        
+      
+        <dt id="STARTING_USD">STARTING_USD
+        
+        <dd>
+        
+      
+        <dt id="VERSION">VERSION
+        
+        <dd><p>The application&#39;s Version</p>
+        
+      
+        <dt id="WORKING_DIR">WORKING_DIR
+        
+        <dd><p>The application&#39;s working directory within the user&#39;s home
+directory</p>
+        
+      
+      </dl>
+    </section>
+    
+
+    
+
+    
+     <section id="public-class-5Buntitled-5D-method-details" class="method-section">
+       <header>
+         <h3>Public Class Methods</h3>
+       </header>
+
+    
+      <div id="method-c-new" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">new</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Initialization</p>
+          
+          
+
+          
+          <div class="method-source-code" id="new-source">
+            <pre><span class="ruby-comment"># File tctb, line 36</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">initialize</span>
+        <span class="ruby-comment"># Signal Traps</span>
+        <span class="ruby-constant">Signal</span>.<span class="ruby-identifier">trap</span>(<span class="ruby-string">&#39;INT&#39;</span>) {
+                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">shutdown</span>
+                <span class="ruby-identifier">exit</span>
+        }
+        <span class="ruby-constant">Signal</span>.<span class="ruby-identifier">trap</span>(<span class="ruby-string">&#39;TERM&#39;</span>) {
+                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">shutdown</span>
+                <span class="ruby-identifier">exit</span>
+        }
+
+        <span class="ruby-comment"># Open Syslog</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">open</span>(<span class="ruby-constant">APPNAME</span>, <span class="ruby-constant">Syslog</span><span class="ruby-operator">::</span><span class="ruby-constant">LOG_CONS</span><span class="ruby-operator">|</span><span class="ruby-constant">Syslog</span><span class="ruby-operator">::</span><span class="ruby-constant">LOG_PID</span>, <span class="ruby-constant">Syslog</span><span class="ruby-operator">::</span><span class="ruby-constant">LOG_DAEMON</span>)
+
+        <span class="ruby-comment"># Log application startup</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;%s v.%s Startup&quot;</span>, <span class="ruby-constant">APPNAME</span>, <span class="ruby-constant">VERSION</span>)
+
+        <span class="ruby-comment"># Check for application home directory and create it if missing</span>
+        <span class="ruby-identifier">pathname</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> )
+        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">pathname</span>.<span class="ruby-identifier">exist?</span>
+                <span class="ruby-comment"># Create any missing path</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-string">&quot;Working directory &#39;%s&#39; does not exist... creating.&quot;</span> )
+                <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">mkpath</span>
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-comment"># Load the configuration file</span>
+        <span class="ruby-ivar">@configfile</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">load_config</span>
+
+        <span class="ruby-comment"># Shorter variable names for frequently used config variables</span>
+        <span class="ruby-ivar">@exchange</span> = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:exchange</span>]
+
+        <span class="ruby-comment"># Load persistent state file</span>
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">load_state</span>
+
+        <span class="ruby-comment"># Load the Influencers databases</span>
+        <span class="ruby-ivar">@influencers_day</span>   = <span class="ruby-identifier">load_influencers</span>(<span class="ruby-string">&#39;influencers_day.dat&#39;</span>)
+        <span class="ruby-ivar">@influencers_week</span>  = <span class="ruby-identifier">load_influencers</span>(<span class="ruby-string">&#39;influencers_week.dat&#39;</span>)
+        <span class="ruby-ivar">@influencers_month</span> = <span class="ruby-identifier">load_influencers</span>(<span class="ruby-string">&#39;influencers_month.dat&#39;</span>)
+        <span class="ruby-ivar">@influencers_all</span>   = <span class="ruby-identifier">load_influencers</span>(<span class="ruby-string">&#39;influencers_all.dat&#39;</span>)
+        
+        <span class="ruby-comment"># Global Variables Initialization</span>
+        <span class="ruby-ivar">@shutdown</span>              = <span class="ruby-keyword">false</span>
+        <span class="ruby-ivar">@time</span>                  = <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>
+        <span class="ruby-ivar">@minute</span>                = <span class="ruby-value">1</span>
+        <span class="ruby-ivar">@votes_min</span>             = <span class="ruby-value">1</span>
+        <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmin</span>]   <span class="ruby-operator">||=</span> <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">min</span>
+        <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:dots</span>]        = <span class="ruby-string">&quot;&quot;</span>
+        <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmonth</span>] <span class="ruby-operator">||=</span> <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">month</span>
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+    </section>
+  
+     <section id="public-instance-5Buntitled-5D-method-details" class="method-section">
+       <header>
+         <h3>Public Instance Methods</h3>
+       </header>
+
+    
+      <div id="method-i-connect_cryptomnio" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">connect_cryptomnio</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="connect_cryptomnio-source">
+            <pre><span class="ruby-comment"># File tctb, line 325</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">connect_cryptomnio</span>
+        <span class="ruby-comment"># Create Cryptomnio client object</span>
+        <span class="ruby-identifier">cryptomnio</span> = <span class="ruby-constant">Cryptomnio</span><span class="ruby-operator">::</span><span class="ruby-constant">REST</span><span class="ruby-operator">::</span><span class="ruby-constant">Client</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">c</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">config</span> = {
+                        <span class="ruby-comment"># API Endpoint URL</span>
+                        <span class="ruby-value">api_host_core:</span> <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:api_host_core</span>],
+                        <span class="ruby-value">api_host_cma:</span>  <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:api_host_cma</span>],
+                        <span class="ruby-comment"># Authentication</span>
+       <span class="ruby-value">authtype:</span>   <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:authtype</span>],
+          <span class="ruby-value">access_key:</span> <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:access_key</span>],
+           <span class="ruby-value">secret_key:</span> <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:secret_key</span>],
+                        <span class="ruby-comment"># Venue Contexts</span>
+                        <span class="ruby-value">contexts:</span> []
+        }
+                <span class="ruby-comment"># Context (venue + account)</span>
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">config</span>[<span class="ruby-value">:contexts</span>] = {
+                        <span class="ruby-value">bitstamp:</span> {
+                                <span class="ruby-value">venue:</span>      <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:exchange</span>],
+                                <span class="ruby-value">accountid:</span>  <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:accountid</span>],
+                                <span class="ruby-value">venuekeyid:</span> <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:venuekeyid</span>]
+                        }
+                }
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-comment"># Output</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Connected to Cryptomnio (%s)&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:cryptomnio</span>][<span class="ruby-value">:exchange</span>] ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+        <span class="ruby-comment"># Return Cryptomnio client object</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">cryptomnio</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-connect_twitter" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">connect_twitter</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="connect_twitter-source">
+            <pre><span class="ruby-comment"># File tctb, line 307</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">connect_twitter</span>
+        <span class="ruby-comment"># Get Twitter Handle from config</span>
+        <span class="ruby-ivar">@twitter_handle</span> = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:username</span>]
+
+        <span class="ruby-comment"># Create Twitter client object</span>
+        <span class="ruby-identifier">twitter</span> = <span class="ruby-constant">Twitter</span><span class="ruby-operator">::</span><span class="ruby-constant">REST</span><span class="ruby-operator">::</span><span class="ruby-constant">Client</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">c</span><span class="ruby-operator">|</span>
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">consumer_key</span>        = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:consumer_key</span>]
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">consumer_secret</span>     = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:consumer_secret</span>]
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">access_token</span>        = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:access_token</span>]
+                <span class="ruby-identifier">c</span>.<span class="ruby-identifier">access_token_secret</span> = <span class="ruby-ivar">@configfile</span>[<span class="ruby-value">:twitter</span>][<span class="ruby-value">:access_token_secret</span>]
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-comment"># Output</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Connected to Twitter as &#39;%s&#39;&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@twitter_handle</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">twitter</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-get_leaderboard" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">get_leaderboard</span><span
+            class="method-args">( timeframe, entries )</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="get_leaderboard-source">
+            <pre><span class="ruby-comment"># File tctb, line 231</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">get_leaderboard</span>( <span class="ruby-identifier">timeframe</span>, <span class="ruby-identifier">entries</span> )
+        <span class="ruby-keyword">case</span> <span class="ruby-identifier">timeframe</span>
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:day</span>
+                        <span class="ruby-identifier">hash</span> = <span class="ruby-ivar">@influencers_day</span>
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:week</span>
+                        <span class="ruby-identifier">hash</span> = <span class="ruby-ivar">@influencers_week</span>
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:month</span>
+                        <span class="ruby-identifier">hash</span> = <span class="ruby-ivar">@influencers_month</span>
+                <span class="ruby-keyword">else</span>
+                        <span class="ruby-identifier">hash</span> = <span class="ruby-ivar">@influencers_all</span>
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-identifier">leaders</span> = <span class="ruby-identifier">hash</span>.<span class="ruby-identifier">sort_by</span> {<span class="ruby-operator">|</span><span class="ruby-identifier">key</span>, <span class="ruby-identifier">value</span><span class="ruby-operator">|</span> <span class="ruby-identifier">value</span> }.<span class="ruby-identifier">reverse</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">leaders</span>[<span class="ruby-value">0</span><span class="ruby-operator">..</span><span class="ruby-value">4</span>]
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-load_config" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">load_config</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Read YAML Configuration File into config data structure</p>
+          
+          
+
+          
+          <div class="method-source-code" id="load_config-source">
+            <pre><span class="ruby-comment"># File tctb, line 107</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_config</span>
+        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.config&#39;</span> )
+        <span class="ruby-identifier">raise</span> <span class="ruby-string">&quot;Config File &#39;%s&#39; NOT FOUND&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span> <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
+        <span class="ruby-identifier">configfile</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span> ).<span class="ruby-identifier">read</span> )
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Configuration loaded from &#39;%s&#39;:&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span> )
+        <span class="ruby-identifier">pp</span> <span class="ruby-identifier">configfile</span>.<span class="ruby-identifier">inspect</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">configfile</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-constant">Errno</span><span class="ruby-operator">::</span><span class="ruby-constant">ENOENT</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Config File &#39;%s&#39; NOT FOUND&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-load_influencers" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">load_influencers</span><span
+            class="method-args">( filename )</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>TODO: Connect to Database for influencers and voting statistics fudge it
+with some hashes for now</p>
+          
+          
+
+          
+          <div class="method-source-code" id="load_influencers-source">
+            <pre><span class="ruby-comment"># File tctb, line 176</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_influencers</span>( <span class="ruby-identifier">filename</span> )
+        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">filename</span> )
+        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
+                <span class="ruby-comment"># File doesn&#39;t exist, initialize it</span>
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Warning: Influencers File &#39;%s&#39; NOT FOUND; Initializing&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
+                <span class="ruby-comment"># Write empty influencers hash to file</span>
+                <span class="ruby-identifier">influencers</span> = {}
+                <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span>) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">to_yaml</span> }
+                <span class="ruby-comment"># Return empty influencers hash</span>
+                <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
+        <span class="ruby-keyword">else</span>
+                <span class="ruby-comment"># Load influencers into a hash</span>
+                <span class="ruby-identifier">influencers</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span> ).<span class="ruby-identifier">read</span> )
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Loaded Influencers File &#39;%s&#39; (%d records)&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">filename</span>, <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">count</span> ] 
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
+                <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;%s:&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                        <span class="ruby-identifier">pp</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">inspect</span>
+                <span class="ruby-keyword">end</span>
+                <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>
+        <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Error: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-load_state" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">load_state</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Read YAML File for persistent state variables</p>
+          
+          
+
+          
+          <div class="method-source-code" id="load_state-source">
+            <pre><span class="ruby-comment"># File tctb, line 124</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">load_state</span>
+        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.state&#39;</span> )
+        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">filename</span>.<span class="ruby-identifier">exist?</span>
+                <span class="ruby-comment"># File doesn&#39;t exist, initialize it</span>
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;WARNING: State File &#39;%s&#39; NOT FOUND; Initializing&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
+
+                <span class="ruby-comment"># Initialize the persistent state hash and save it to YAML file</span>
+                <span class="ruby-ivar">@persist</span> = {}
+                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+        <span class="ruby-keyword">else</span>
+                <span class="ruby-comment"># Load the persistent state hash from YAML file</span>
+                <span class="ruby-ivar">@persist</span> = <span class="ruby-constant">YAML</span>.<span class="ruby-identifier">load</span>( <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span> ).<span class="ruby-identifier">read</span> )
+
+                <span class="ruby-comment"># Output</span>
+                <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Persistent State loaded from &#39;%s&#39;:&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
+                        <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+                                <span class="ruby-identifier">pp</span> <span class="ruby-ivar">@persist</span>.<span class="ruby-identifier">inspect</span>
+                        <span class="ruby-keyword">end</span>
+                <span class="ruby-keyword">end</span>
+
+                <span class="ruby-keyword">return</span> <span class="ruby-keyword">true</span> 
+                <span class="ruby-identifier">exit</span>
+        <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-constant">Errno</span><span class="ruby-operator">::</span><span class="ruby-constant">ENOENT</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;State File &#39;%s&#39; NOT FOUND&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">filename</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-save_influencers" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">save_influencers</span><span
+            class="method-args">( timeframe, influencers )</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="save_influencers-source">
+            <pre><span class="ruby-comment"># File tctb, line 207</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">save_influencers</span>( <span class="ruby-identifier">timeframe</span>, <span class="ruby-identifier">influencers</span> )
+        <span class="ruby-keyword">case</span> <span class="ruby-identifier">timeframe</span>
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:day</span>
+                        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;influencers_day.dat&#39;</span> )
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:week</span>
+                        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;influencers_week.dat&#39;</span> )
+                <span class="ruby-keyword">when</span> <span class="ruby-value">:month</span>
+                        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;influencers_month.dat&#39;</span> )
+                <span class="ruby-keyword">else</span>
+                        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;influencers_all.dat&#39;</span> )
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>(<span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span>) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">to_yaml</span> }
+
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">influencers</span>.<span class="ruby-identifier">count</span> <span class="ruby-comment"># success: return # of entries saved</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Error: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-save_state" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">save_state</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Save YAML File for persistent state variables</p>
+          
+          
+
+          
+          <div class="method-source-code" id="save_state-source">
+            <pre><span class="ruby-comment"># File tctb, line 161</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">save_state</span>
+        <span class="ruby-identifier">filename</span> = <span class="ruby-constant">Pathname</span>.<span class="ruby-identifier">new</span>( <span class="ruby-constant">WORKING_DIR</span> <span class="ruby-operator">+</span> <span class="ruby-string">&#39;tctb.state&#39;</span> )
+        <span class="ruby-constant">File</span>.<span class="ruby-identifier">open</span>( <span class="ruby-identifier">filename</span>, <span class="ruby-string">&#39;w&#39;</span> ) {<span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span> <span class="ruby-identifier">f</span>.<span class="ruby-identifier">write</span> <span class="ruby-ivar">@persist</span>.<span class="ruby-identifier">to_yaml</span> }
+        <span class="ruby-keyword">return</span> <span class="ruby-keyword">true</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Error: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">exit</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-shutdown" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">shutdown</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Shutdown</p>
+          
+          
+
+          
+          <div class="method-source-code" id="shutdown-source">
+            <pre><span class="ruby-comment"># File tctb, line 88</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">shutdown</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Shutting down...&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> )
+        <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+        <span class="ruby-comment"># Save persistent state variables</span>
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+
+        <span class="ruby-comment"># Save influencers databasees</span>
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:day</span>,   <span class="ruby-ivar">@influencers_day</span>   )
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:week</span>,  <span class="ruby-ivar">@influencers_week</span>  )
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:month</span>, <span class="ruby-ivar">@influencers_month</span> )
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:all</span>,   <span class="ruby-ivar">@influencers_all</span>   )
+
+        <span class="ruby-comment"># Return</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-keyword">true</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-start" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">start</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Main Application Routine</p>
+          
+          
+
+          
+          <div class="method-source-code" id="start-source">
+            <pre><span class="ruby-comment"># File tctb, line 357</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">start</span>
+
+        <span class="ruby-comment"># Connect Twitter</span>
+        <span class="ruby-ivar">@twitter</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">connect_twitter</span>
+
+        <span class="ruby-comment"># Connect Cryptomnio</span>
+        <span class="ruby-ivar">@cryptomnio</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">connect_cryptomnio</span>
+
+        <span class="ruby-comment"># Populate initial balances from exchange</span>
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_balances</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;Account Balances at startup: BTC: %s | USD: $%s&quot;</span>, <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-ivar">@usd_balance</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span> 
+
+        <span class="ruby-comment"># Retireve most recent tweet (index 0 of returned Enumerable)</span>
+        <span class="ruby-comment"># TODO: Find most recent POLL tweet, not just the most recent one (which may not be the poll)</span>
+        <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>] = <span class="ruby-ivar">@twitter</span>.<span class="ruby-identifier">user_timeline</span>( <span class="ruby-ivar">@twitter_handle</span>, <span class="ruby-value">count:</span> <span class="ruby-value">1</span> )[<span class="ruby-value">0</span>]
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;Most recent %s tweet at startup: \&quot;%s...\&quot;&quot;</span>, <span class="ruby-ivar">@twitter_handle</span>, <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">text</span>[<span class="ruby-value">0</span>,<span class="ruby-value">26</span>]) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+        <span class="ruby-comment"># Scheduler Loop</span>
+        <span class="ruby-keyword">while</span> <span class="ruby-ivar">@shutdown</span> <span class="ruby-operator">!=</span> <span class="ruby-keyword">true</span>
+                <span class="ruby-identifier">loop</span> <span class="ruby-keyword">do</span>      
+                        <span class="ruby-comment"># Don&#39;t iterate too fast unless we&#39;re in SPEEDMODE mode</span>
+                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">1</span> <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-constant">SPEEDMODE</span>
+
+                        <span class="ruby-comment"># Update to current time</span>
+                        <span class="ruby-ivar">@time</span> = <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>
+
+                        <span class="ruby-comment"># Save current values for conditionals later or initialize them as current</span>
+                        <span class="ruby-ivar">@minute</span> <span class="ruby-operator">?</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmin</span>]   = <span class="ruby-ivar">@minute</span> <span class="ruby-operator">:</span> <span class="ruby-ivar">@minute</span> = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">min</span>
+                        <span class="ruby-identifier">$month</span>  <span class="ruby-operator">?</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmonth</span>] = <span class="ruby-identifier">$month</span>  <span class="ruby-operator">:</span> <span class="ruby-identifier">$month</span>  = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">month</span>
+                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+
+                        <span class="ruby-comment"># Check what minute of the hour it is</span>
+                        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-constant">SPEEDMODE</span>
+                                <span class="ruby-comment"># Get the current minute if not in SPEEDMODE mode</span>
+                                <span class="ruby-identifier">$second</span> = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">sec</span>
+                                <span class="ruby-ivar">@minute</span> = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">min</span>
+                                <span class="ruby-identifier">$hour</span>   = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">hour</span>
+                                <span class="ruby-identifier">$day</span>    = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">day</span>
+                             <span class="ruby-identifier">$month</span>  = <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">month</span>
+                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;\n%02d/%02d %02d:%02d&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$month</span>, <span class="ruby-identifier">$day</span>, <span class="ruby-identifier">$hour</span>, <span class="ruby-ivar">@minute</span> ] <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">3</span>
+                        <span class="ruby-keyword">else</span>
+                                <span class="ruby-comment"># Speed through minutes (1 per second) in SPEEDMODE mode</span>
+                                <span class="ruby-identifier">sleep</span> <span class="ruby-value">1</span>
+                                <span class="ruby-ivar">@minute</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>
+                                <span class="ruby-ivar">@minute</span> = <span class="ruby-value">0</span> <span class="ruby-keyword">if</span> <span class="ruby-ivar">@minute</span> <span class="ruby-operator">==</span> <span class="ruby-value">60</span> 
+                        <span class="ruby-keyword">end</span>
+
+                        <span class="ruby-comment">##</span>
+                        <span class="ruby-comment"># Scheduler</span>
+
+                        <span class="ruby-comment"># On the Month</span>
+                        <span class="ruby-keyword">case</span>
+                                <span class="ruby-keyword">when</span> <span class="ruby-identifier">$month</span> <span class="ruby-operator">!=</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmonth</span>] <span class="ruby-comment"># Month Change!</span>
+                                        <span class="ruby-identifier">leaders</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">get_leaderboard</span>( <span class="ruby-value">:month</span>, <span class="ruby-value">5</span> )
+
+                                        <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;%s&#39;s Top 5 Monthly Influencers:\n\n&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@twitter_handle</span>
+                                        <span class="ruby-identifier">count</span> = <span class="ruby-value">0</span>
+                                        <span class="ruby-identifier">leaders</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span><span class="ruby-operator">|</span>
+                                                <span class="ruby-identifier">count</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;%d: @%s with %d votes!\n&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">count</span>, <span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span> ] 
+                                        <span class="ruby-keyword">end</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span> )
+
+                                        <span class="ruby-comment"># TODO: Rotate and save the monthly influencer&#39;s file for records</span>
+
+                                        <span class="ruby-comment"># Reset the monthly influencers count for the new month</span>
+                                        <span class="ruby-ivar">@influencers_month</span> = {}
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:month</span>, <span class="ruby-ivar">@influencers_month</span> )
+
+                                        <span class="ruby-comment"># TODO: Have the bot calculate monthly profits and distribute profits to the monthly leaderboard if they have registered a Bitcoin Address</span>
+                                <span class="ruby-keyword">else</span>
+                        <span class="ruby-keyword">end</span>
+
+                        <span class="ruby-comment"># On the Week</span>
+                        <span class="ruby-keyword">case</span>
+                                <span class="ruby-keyword">when</span> <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">sunday?</span> <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">$hour</span> <span class="ruby-operator">==</span> <span class="ruby-value">00</span> <span class="ruby-operator">&amp;</span> <span class="ruby-ivar">@minute</span> = <span class="ruby-value">00</span>
+                                        <span class="ruby-identifier">leaders</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">get_leaderboard</span>( <span class="ruby-value">:week</span>, <span class="ruby-value">5</span> )
+                        
+                                        <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;%s&#39;s Top 5 Weekly Influencers:\n\n&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@twitter_handle</span>
+                                        <span class="ruby-identifier">count</span> = <span class="ruby-value">0</span>
+                                        <span class="ruby-identifier">leaders</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span><span class="ruby-operator">|</span>
+                                                <span class="ruby-identifier">count</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;%d: @%s with %d votes!\n&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">count</span>, <span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span> ] 
+                                        <span class="ruby-keyword">end</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span> )
+
+                                        <span class="ruby-comment"># Reset the weekly influencers count for the new week</span>
+                                        <span class="ruby-ivar">@influencers_week</span> = {}
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:week</span>, <span class="ruby-ivar">@influencers_week</span> )
+
+                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">60</span>
+                        <span class="ruby-keyword">end</span>
+
+                        <span class="ruby-comment"># On the Hour</span>
+                        <span class="ruby-keyword">case</span>
+                                <span class="ruby-keyword">when</span> <span class="ruby-identifier">$hour</span> <span class="ruby-operator">==</span> <span class="ruby-value">23</span> <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-ivar">@minute</span> <span class="ruby-operator">==</span> <span class="ruby-value">59</span> <span class="ruby-comment"># Just before Midnight</span>
+                                        <span class="ruby-identifier">leaders</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">get_leaderboard</span>( <span class="ruby-value">:day</span>, <span class="ruby-value">5</span> )
+
+                                        <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;%s&#39;s Top 5 Daily Influencers:\n&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@twitter_handle</span>
+                                        <span class="ruby-identifier">count</span> = <span class="ruby-value">0</span>
+                                        <span class="ruby-identifier">leaders</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span><span class="ruby-operator">|</span>
+                                                <span class="ruby-identifier">count</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;%d: @%s with %d votes!\n&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">count</span>, <span class="ruby-identifier">handle</span>, <span class="ruby-identifier">votecount</span> ] 
+                                        <span class="ruby-keyword">end</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span> )
+
+                                        <span class="ruby-comment"># Reset the daily influencers count for the new day</span>
+                                        <span class="ruby-ivar">@influencers_day</span> = {}
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:day</span>, <span class="ruby-ivar">@influencers_day</span> )
+
+                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">60</span>
+                        <span class="ruby-keyword">end</span>
+
+                        <span class="ruby-comment"># On the Minute</span>
+                        <span class="ruby-keyword">case</span> <span class="ruby-ivar">@minute</span>
+
+                                <span class="ruby-keyword">when</span> <span class="ruby-value">00</span> <span class="ruby-comment"># Minute 00: Post a new Poll</span>
+                                        <span class="ruby-comment"># Refresh Account Balances</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_balances</span>
+
+                                        <span class="ruby-comment"># Get current ticker spot price</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_ticker</span>
+                        
+                                        <span class="ruby-comment"># Generate a new Poll ID</span>
+                                        <span class="ruby-ivar">@pollid</span> = <span class="ruby-string">&quot;%d%02d%02d%02d&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">year</span>, <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">month</span>, <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">day</span>, <span class="ruby-ivar">@time</span>.<span class="ruby-identifier">hour</span> ]
+                                        <span class="ruby-ivar">@pollid</span> = <span class="ruby-ivar">@pollid</span>.<span class="ruby-identifier">to_i</span>
+
+                                        <span class="ruby-comment"># Post the new poll</span>
+                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Posting a new poll! (ID: %d)&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@pollid</span>
+                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                        <span class="ruby-comment">#TODO: Add last order info to this tweet</span>
+                                        <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;Poll %d: Should I BUY, SELL, or HODL?\n\n&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@pollid</span>
+                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Current BTC/USD Spot: $%s\n\n&quot;</span>             <span class="ruby-operator">%</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>]
+                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Balances:\n&quot;</span>
+                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;BTC: %s\n&quot;</span>                                 <span class="ruby-operator">%</span> <span class="ruby-ivar">@btc_balance</span>
+                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;USD: \$%s\n\n&quot;</span>                             <span class="ruby-operator">%</span> <span class="ruby-ivar">@usd_balance</span>
+                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Reply with one keyword: BUY, SELL, or HODL. Most recent reply is your vote (so you can change your mind), multiple keywords in one reply ignored&quot;</span>
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span> )
+
+                                        <span class="ruby-comment"># Finished with this minute&#39;s operation... sleep to ensure this doesn&#39;t get called again this hour</span>
+                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">60</span>
+
+                                <span class="ruby-keyword">when</span> <span class="ruby-value">55</span> <span class="ruby-comment"># Minute 55: Close the Poll</span>
+                                        <span class="ruby-comment"># Retrieve most recent tweet, *should* be the last poll posted</span>
+                                        <span class="ruby-comment"># TODO: Find and retrieve the most recent poll tweet instead of assuming the lasttweet is the most recent poll</span>
+                                        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>]
+                                                <span class="ruby-comment"># Get the most recent tweet from Twitter</span>
+                                                <span class="ruby-identifier">$tweets</span> = <span class="ruby-ivar">@twitter</span>.<span class="ruby-identifier">user_timeline</span>(<span class="ruby-ivar">@twitter_handle</span>, <span class="ruby-value">count:</span> <span class="ruby-value">1</span>)
+                                                <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>] = <span class="ruby-identifier">$tweets</span>[<span class="ruby-value">0</span>]
+                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+
+                                                <span class="ruby-comment"># Output</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Retrieved most recent %s tweet (poll): \&quot;%s...\&quot;&quot;</span>, <span class="ruby-ivar">@twitter_handle</span>, <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">text</span>[<span class="ruby-value">0</span>,<span class="ruby-value">26</span>] ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                        <span class="ruby-keyword">end</span>
+
+                                        <span class="ruby-comment"># Extract the Poll ID from the tweet</span>
+                                        <span class="ruby-ivar">@pollid</span> = <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">text</span>[<span class="ruby-regexp">/\b(?&lt;!\.)\d+(?!\.)\b/</span>, <span class="ruby-value">0</span>]
+                                        <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-ivar">@pollid</span>
+                                                <span class="ruby-comment"># Couldn&#39;t get the Poll ID, sleep past this minute and break</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-string">&quot;Unable to retrieve Poll ID from most recent tweet! %s&quot;</span>, <span class="ruby-ivar">@pollid</span>.<span class="ruby-identifier">inspect</span> )
+                                                <span class="ruby-identifier">sleep</span> <span class="ruby-value">60</span>
+                                                <span class="ruby-keyword">break</span>
+                                        <span class="ruby-keyword">end</span>
+                                        <span class="ruby-ivar">@pollid</span> = <span class="ruby-ivar">@pollid</span>.<span class="ruby-identifier">to_i</span>
+
+                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Closing Poll %s&quot;</span>, <span class="ruby-ivar">@pollid</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                        <span class="ruby-keyword">if</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>]
+                                                <span class="ruby-comment"># Get all replies to the account after our poll tweet</span>
+                                                <span class="ruby-identifier">query</span> = <span class="ruby-string">&quot;to:%s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@twitter_handle</span>
+                                                <span class="ruby-identifier">reply_tweets</span> = <span class="ruby-ivar">@twitter</span>.<span class="ruby-identifier">search</span>(<span class="ruby-identifier">query</span>, <span class="ruby-value">since_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span>, <span class="ruby-value">result_type:</span> <span class="ruby-string">&quot;recent&quot;</span>)
+                                                <span class="ruby-comment">#p reply_tweets if VERBOSITY &gt;= 3</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">debug</span>( <span class="ruby-string">&quot;Got %d replies to user.&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">reply_tweets</span>.<span class="ruby-identifier">count</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-string">&quot;WARNING: Got %d replies to user, possibly more than 100 votes!&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">reply_tweets</span>.<span class="ruby-identifier">count</span> ) <span class="ruby-keyword">if</span> <span class="ruby-identifier">reply_tweets</span>.<span class="ruby-identifier">count</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">100</span>
+                                                <span class="ruby-comment"># TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.</span>
+
+                                                <span class="ruby-comment"># Find subset of replies that replied directly to our poll tweet</span>
+                                                <span class="ruby-identifier">replies</span> = []
+                                                <span class="ruby-identifier">index</span> = <span class="ruby-value">0</span>
+                                                <span class="ruby-keyword">for</span> <span class="ruby-identifier">tweet</span> <span class="ruby-keyword">in</span> <span class="ruby-identifier">reply_tweets</span> <span class="ruby-keyword">do</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">in_reply_to_status_id</span> <span class="ruby-operator">==</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span>
+                                                                <span class="ruby-identifier">replies</span>[<span class="ruby-identifier">index</span>] = <span class="ruby-identifier">tweet</span>
+                                                                <span class="ruby-identifier">index</span> <span class="ruby-operator">+=</span> <span class="ruby-value">1</span>
+                                                        <span class="ruby-keyword">end</span>
+                                                <span class="ruby-keyword">end</span>
+
+                                                <span class="ruby-comment"># Reverse order so that tweets are in chronological order</span>
+                                                <span class="ruby-identifier">replies</span> = <span class="ruby-identifier">replies</span>.<span class="ruby-identifier">reverse</span>
+
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">debug</span>(<span class="ruby-string">&quot;Got %d replies to poll.&quot;</span>, <span class="ruby-identifier">replies</span>.<span class="ruby-identifier">count</span>) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">3</span> 
+                                                        <span class="ruby-keyword">for</span> <span class="ruby-identifier">tweet</span> <span class="ruby-keyword">in</span> <span class="ruby-identifier">replies</span> <span class="ruby-keyword">do</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">debug</span>(<span class="ruby-string">&quot;%s said: \&quot;%s\&quot;&quot;</span>, <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">user</span>.<span class="ruby-identifier">screen_name</span>, <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">text</span>)
+                                                        <span class="ruby-keyword">end</span>
+                                                <span class="ruby-keyword">end</span>
+
+                                                <span class="ruby-comment"># Count the votes from replies</span>
+                                                <span class="ruby-identifier">votes</span> = {}
+                                                <span class="ruby-keyword">for</span> <span class="ruby-identifier">tweet</span> <span class="ruby-keyword">in</span> <span class="ruby-identifier">replies</span> <span class="ruby-keyword">do</span>
+                                                        <span class="ruby-comment"># Parse the tweet text for the vote keywords</span>
+                                                        <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">text</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp">/buy/i</span>  <span class="ruby-operator">?</span> <span class="ruby-identifier">buy</span>  = <span class="ruby-keyword">true</span>  <span class="ruby-operator">:</span> <span class="ruby-identifier">buy</span>  = <span class="ruby-keyword">false</span> 
+                                                        <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">text</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp">/sell/i</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">sell</span> = <span class="ruby-keyword">true</span>  <span class="ruby-operator">:</span> <span class="ruby-identifier">sell</span> = <span class="ruby-keyword">false</span> 
+                                                        <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">text</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp">/hodl/i</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">hodl</span> = <span class="ruby-keyword">true</span>  <span class="ruby-operator">:</span> <span class="ruby-identifier">hodl</span> = <span class="ruby-keyword">false</span> 
+                                                        <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">text</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp">/hold/i</span> <span class="ruby-operator">?</span> <span class="ruby-identifier">hodl</span> = <span class="ruby-keyword">true</span>  <span class="ruby-operator">:</span> <span class="ruby-identifier">hodl</span> = <span class="ruby-keyword">false</span> 
+                                                        <span class="ruby-comment"># Ensure that the tweet only contains one keyword</span>
+                                                        <span class="ruby-keyword">if</span> [<span class="ruby-identifier">buy</span>, <span class="ruby-identifier">sell</span>, <span class="ruby-identifier">hodl</span>].<span class="ruby-identifier">one?</span>
+                                                                <span class="ruby-comment"># Add the voted keyword to the votes hash. Most recent vote per user will be counted.</span>
+                                                                <span class="ruby-identifier">votes</span>[<span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">user</span>.<span class="ruby-identifier">screen_name</span>] = <span class="ruby-string">&quot;BUY&quot;</span>  <span class="ruby-keyword">if</span> <span class="ruby-identifier">buy</span>  <span class="ruby-operator">==</span> <span class="ruby-keyword">true</span>
+                                                                <span class="ruby-identifier">votes</span>[<span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">user</span>.<span class="ruby-identifier">screen_name</span>] = <span class="ruby-string">&quot;SELL&quot;</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">sell</span> <span class="ruby-operator">==</span> <span class="ruby-keyword">true</span>
+                                                                <span class="ruby-identifier">votes</span>[<span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">user</span>.<span class="ruby-identifier">screen_name</span>] = <span class="ruby-string">&quot;HODL&quot;</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">hodl</span> <span class="ruby-operator">==</span> <span class="ruby-keyword">true</span>
+                                                        <span class="ruby-keyword">end</span>
+                                                <span class="ruby-keyword">end</span>              
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Got %d votes in poll.&quot;</span>, <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">size</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                                <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                        <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">name</span>, <span class="ruby-identifier">vote</span><span class="ruby-operator">|</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">debug</span>( <span class="ruby-string">&quot;%s voted: \&quot;%s\&quot;&quot;</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">vote</span> )
+                                                        <span class="ruby-keyword">end</span>
+                                                <span class="ruby-keyword">end</span>
+
+                                                <span class="ruby-comment"># Check if we have our minimum threshold of votes. Default to HODL if not</span>
+                                                <span class="ruby-keyword">if</span> <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span> <span class="ruby-operator">&lt;</span> <span class="ruby-ivar">@votes_min</span>
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Only received %d votes (minimum %d), HODL!&quot;</span>    <span class="ruby-operator">%</span> [ <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span>, <span class="ruby-ivar">@votes_min</span> ] ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                                        <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;Voting closed for poll %d.\n\n&quot;</span>                    <span class="ruby-operator">%</span> <span class="ruby-ivar">@pollid</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Not enough votes to make a decision.  HODL!!!\n\n&quot;</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;(Need minimum %d vote, got %d votes...&quot;</span>            <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@votes_min</span>, <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span> ]
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Maybe you should retweet my poll tweet?)&quot;</span>
+                                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> ) 
+                                                        <span class="ruby-identifier">$decision</span> = <span class="ruby-string">&quot;HODL&quot;</span>
+                                                <span class="ruby-keyword">else</span>
+                                                        <span class="ruby-comment"># We have enough votes!  Make some trades...</span>
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Enough votes received, tallying the votes to make a decision!&quot;</span> )
+
+                                                        <span class="ruby-comment"># Tally the votes</span>
+                                                        <span class="ruby-identifier">tally</span> = {}
+                                                        <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>]  = <span class="ruby-value">0</span>
+                                                        <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>] = <span class="ruby-value">0</span>
+                                                        <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>] = <span class="ruby-value">0</span>
+                                                        <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">name</span>, <span class="ruby-identifier">vote</span><span class="ruby-operator">|</span>
+                                                                <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>]  <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">vote</span> <span class="ruby-operator">==</span> <span class="ruby-string">&quot;BUY&quot;</span>
+                                                                <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>] <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">vote</span> <span class="ruby-operator">==</span> <span class="ruby-string">&quot;SELL&quot;</span>
+                                                                <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>] <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">vote</span> <span class="ruby-operator">==</span> <span class="ruby-string">&quot;HODL&quot;</span>
+                                                                <span class="ruby-comment"># Add a vote to the name&#39;s influencers score</span>
+                                                                <span class="ruby-ivar">@influencers_day</span>[<span class="ruby-identifier">name</span>]   <span class="ruby-operator">?</span> <span class="ruby-ivar">@influencers_day</span>[<span class="ruby-identifier">name</span>]   <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-operator">:</span> <span class="ruby-ivar">@influencers_day</span>[<span class="ruby-identifier">name</span>]      = <span class="ruby-value">1</span>
+                                                                <span class="ruby-ivar">@influencers_week</span>[<span class="ruby-identifier">name</span>]  <span class="ruby-operator">?</span> <span class="ruby-ivar">@influencers_week</span>[<span class="ruby-identifier">name</span>]  <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-operator">:</span> <span class="ruby-ivar">@influencers_week</span>[<span class="ruby-identifier">name</span>]     = <span class="ruby-value">1</span>
+                                                                <span class="ruby-ivar">@influencers_month</span>[<span class="ruby-identifier">name</span>] <span class="ruby-operator">?</span> <span class="ruby-ivar">@influencers_month</span>[<span class="ruby-identifier">name</span>] <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-operator">:</span> <span class="ruby-ivar">@influencers_month</span>[<span class="ruby-identifier">name</span>] = <span class="ruby-value">1</span>
+                                                                <span class="ruby-ivar">@influencers_all</span>[<span class="ruby-identifier">name</span>]   <span class="ruby-operator">?</span> <span class="ruby-ivar">@influencers_all</span>[<span class="ruby-identifier">name</span>]   <span class="ruby-operator">+=</span> <span class="ruby-value">1</span> <span class="ruby-operator">:</span> <span class="ruby-ivar">@influencers_all</span>[<span class="ruby-identifier">name</span>]      = <span class="ruby-value">1</span>
+                                                        <span class="ruby-keyword">end</span>
+
+                                                        <span class="ruby-comment"># Calculate relative percentages of each position</span>
+                                                        <span class="ruby-ivar">@buy_percentage</span>  = (<span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>].<span class="ruby-identifier">to_f</span>  <span class="ruby-operator">/</span> <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span> 
+                                                        <span class="ruby-ivar">@sell_percentage</span> = (<span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>].<span class="ruby-identifier">to_f</span> <span class="ruby-operator">/</span> <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span>
+                                                        <span class="ruby-ivar">@hodl_percentage</span> = (<span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>].<span class="ruby-identifier">to_f</span> <span class="ruby-operator">/</span> <span class="ruby-identifier">votes</span>.<span class="ruby-identifier">count</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;BUY percentage:  %0.2f%%&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@buy_percentage</span>
+                                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;SELL percentage: %0.2f%%&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@sell_percentage</span>
+                                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;HODL percentage: %0.2f%%&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@hodl_percentage</span>
+                                                        <span class="ruby-keyword">end</span>
+
+                                                        <span class="ruby-comment"># Save the updated influencers data</span>
+                                                        <span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:day</span>,   <span class="ruby-ivar">@influencers_day</span>   )
+                                                        <span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:week</span>,  <span class="ruby-ivar">@influencers_week</span>  )
+                                                        <span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:month</span>, <span class="ruby-ivar">@influencers_month</span> )
+                                                        <span class="ruby-identifier">save_influencers</span>( <span class="ruby-value">:all</span>,   <span class="ruby-ivar">@influencers_all</span>   )
+
+                                                        <span class="ruby-comment"># Find the largest number in the tally hash and return the associated key(s)</span>
+                                                        <span class="ruby-identifier">winner</span> = <span class="ruby-identifier">tally</span>.<span class="ruby-identifier">reduce</span>({}){<span class="ruby-operator">|</span><span class="ruby-identifier">h</span>,(<span class="ruby-identifier">k</span>,<span class="ruby-identifier">v</span>)<span class="ruby-operator">|</span> (<span class="ruby-identifier">h</span>[<span class="ruby-identifier">v</span>] <span class="ruby-operator">||=</span> []) <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">k</span>;<span class="ruby-identifier">h</span>}.<span class="ruby-identifier">max</span>
+                                                        <span class="ruby-comment"># There can be only one:</span>
+                                                        <span class="ruby-identifier">$decision</span> = <span class="ruby-string">&quot;HODL&quot;</span> <span class="ruby-comment">#default</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">winner</span>[<span class="ruby-value">1</span>].<span class="ruby-identifier">count</span> <span class="ruby-operator">&gt;</span> <span class="ruby-value">1</span>
+                                                                <span class="ruby-comment"># Tie!  HODL...</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Result of Poll %d was a tie! I&#39;m gonna %s. Vote Tally: [ BUY:  %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]&quot;</span> <span class="ruby-operator">%</span> [<span class="ruby-ivar">@pollid</span>, <span class="ruby-identifier">$decision</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>], <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>], <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>], <span class="ruby-ivar">@hodl_percentage</span>] <span class="ruby-comment"># strings going to Syslog need double-escapes for format strings</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+
+                                                                <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;Result of Poll %d was a tie! I&#39;m gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)&quot;</span> <span class="ruby-operator">%</span> [<span class="ruby-ivar">@pollid</span>, <span class="ruby-identifier">$decision</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>], <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>], <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>], <span class="ruby-ivar">@hodl_percentage</span>]
+                                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+                                                        <span class="ruby-keyword">else</span>
+                                                                <span class="ruby-comment"># Winner!</span>
+                                                                <span class="ruby-identifier">$decision</span> = <span class="ruby-string">&quot;BUY&quot;</span>  <span class="ruby-keyword">if</span> <span class="ruby-identifier">winner</span>[<span class="ruby-value">1</span>][<span class="ruby-value">0</span>] <span class="ruby-operator">==</span> <span class="ruby-value">:buy</span>
+                                                                <span class="ruby-identifier">$decision</span> = <span class="ruby-string">&quot;SELL&quot;</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">winner</span>[<span class="ruby-value">1</span>][<span class="ruby-value">0</span>] <span class="ruby-operator">==</span> <span class="ruby-value">:sell</span>
+                                                                <span class="ruby-identifier">$decision</span> = <span class="ruby-string">&quot;HODL&quot;</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">winner</span>[<span class="ruby-value">1</span>][<span class="ruby-value">0</span>] <span class="ruby-operator">==</span> <span class="ruby-value">:hodl</span>
+
+                                                                <span class="ruby-comment"># Post poll results</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;The results for Poll %d are in! %s is the winner! Vote Tally: [ BUY: %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]&quot;</span> <span class="ruby-operator">%</span> [<span class="ruby-ivar">@pollid</span>, <span class="ruby-identifier">$decision</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>], <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>], <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>], <span class="ruby-ivar">@hodl_percentage</span>] <span class="ruby-comment"># strings going to Syslog need double-escapes for format strings</span>
+                                                                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span>.<span class="ruby-identifier">to_s</span> )
+
+                                                                <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;The results for Poll %d are in!\n\n%s is the winner!\n\nVote Tally:\nBUY: %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)&quot;</span> <span class="ruby-operator">%</span> [<span class="ruby-ivar">@pollid</span>, <span class="ruby-identifier">$decision</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:buy</span>], <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:sell</span>], <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">tally</span>[<span class="ruby-value">:hodl</span>], <span class="ruby-ivar">@hodl_percentage</span>]
+                                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+                                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+                                                        <span class="ruby-keyword">end</span>
+
+                                                <span class="ruby-keyword">end</span> <span class="ruby-comment"># if votes.count &lt; 10</span>
+                                        <span class="ruby-keyword">end</span> <span class="ruby-comment"># if @persist[:lasttweet]</span>
+
+                                        <span class="ruby-comment"># Execute desired trade via Cryptomnio</span>
+                                        <span class="ruby-keyword">case</span> <span class="ruby-identifier">$decision</span>
+                                                <span class="ruby-keyword">when</span> <span class="ruby-string">&quot;BUY&quot;</span>
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;Executing MARKET BUY order via Cryptomnio...&quot;</span>) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+                                                        <span class="ruby-comment"># Determine @usd_percentage % of USD</span>
+                                                        <span class="ruby-comment"># TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)</span>
+                                                        <span class="ruby-ivar">@buy_percentage</span> = <span class="ruby-value">90</span> <span class="ruby-keyword">if</span> <span class="ruby-ivar">@buy_percentage</span> <span class="ruby-operator">==</span> <span class="ruby-value">100</span> <span class="ruby-comment"># Need to give the bot a little wiggle room for market changes and trading fees</span>
+                                                        <span class="ruby-identifier">balance</span> = <span class="ruby-ivar">@usd_balance</span>.<span class="ruby-identifier">to_f</span> 
+                                                        <span class="ruby-identifier">$amount</span> = (<span class="ruby-identifier">balance</span> <span class="ruby-operator">*</span> (<span class="ruby-ivar">@buy_percentage</span> <span class="ruby-operator">/</span> <span class="ruby-value">100.0</span>)).<span class="ruby-identifier">to_f</span>
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it...&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@usd_balance</span>, <span class="ruby-identifier">$amount</span>, <span class="ruby-ivar">@buy_percentage</span> ]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+                                                        <span class="ruby-comment"># Get current ticker spot price</span>
+                                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_ticker</span>
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Current spot price for BTC/USD on %s: \$%s&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@exchange</span>, <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>]]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                        
+                                                        <span class="ruby-comment"># Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )</span>
+                                                        <span class="ruby-identifier">$volume</span> = ( <span class="ruby-identifier">$amount</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> ).<span class="ruby-identifier">round</span>(<span class="ruby-value">8</span>)
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;BUYing %0.8f BTC with $%0.2f USD.&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-identifier">$amount</span> ]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+                                                        <span class="ruby-comment"># Sanity check volume to make sure it&#39;s not below minimum exchange trade limits</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">$volume</span> <span class="ruby-operator">&lt;</span> <span class="ruby-value">0.003</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Attemtped BUY of %0.8f BTC (%0.2f%%%% of %0.2f%%%% USD) is below Bitstamp&#39;s minimum order volume limit (0.003 BTC). Gotta HODL!!!&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-ivar">@usd_balance</span> ]
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+                                
+                                                                <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;Attempted BUY of %0.8f BTC (%0.2f%% of %0.2f%% USD) is below Bitstamp&#39;s minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-ivar">@usd_balance</span> ]
+                                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+
+                                                                <span class="ruby-keyword">break</span>
+                                                        <span class="ruby-keyword">end</span>
+
+                                                        <span class="ruby-comment"># Place BID order</span>
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;BUYing %0.8f BTC (%0.2f%%%% of $%0.2f USD) at MARKET&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">balance</span> ]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+                                                        <span class="ruby-identifier">$order_id</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">create_venue_account_order_market</span>( <span class="ruby-string">&quot;buy&quot;</span>, <span class="ruby-identifier">$volume</span>, <span class="ruby-string">&quot;btc_usd&quot;</span> )
+
+                                                        <span class="ruby-comment"># Get Order Info</span>
+                                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">15</span>
+                                                        <span class="ruby-identifier">$order_info</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_order</span>( <span class="ruby-identifier">$order_id</span> )
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Placed order %s at %s&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueOrderId&#39;</span>], <span class="ruby-ivar">@exchange</span> ] 
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+
+                                                <span class="ruby-keyword">when</span> <span class="ruby-string">&quot;SELL&quot;</span>
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;Executing MARKET SELL order via Cryptomnio...&quot;</span>)
+
+                                                        <span class="ruby-comment"># Calculate volume to sell ( @sell_percentage % of BTC balance rounded to 8 decimal places )</span>
+                                                        <span class="ruby-identifier">balance</span> = <span class="ruby-ivar">@btc_balance</span>.<span class="ruby-identifier">to_f</span>
+                                                        <span class="ruby-identifier">$volume</span> = (<span class="ruby-identifier">balance</span> <span class="ruby-operator">*</span> (<span class="ruby-ivar">@sell_percentage</span> <span class="ruby-operator">/</span> <span class="ruby-value">100.0</span>)).<span class="ruby-identifier">round</span>(<span class="ruby-value">8</span>)
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Have $%0.8f BTC to SELL. SELLing $%0.8f (%0.2f%%%%) of it...&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@sell_percentage</span> ]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-identifier">message</span> ) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+                                                        
+                                                        <span class="ruby-comment"># Get current ticker spot price</span>
+                                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_ticker</span>
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Current spot price for BTC/USD on %s: \$%s&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@exchange</span>, <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>]]
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">1</span>
+
+                                                        <span class="ruby-comment"># Sanity check volume to make sure it&#39;s not below minimum exchange trade limits</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">$volume</span> <span class="ruby-operator">&lt;</span> <span class="ruby-value">0.003</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Attemtped SELL of %0.8f BTC (%0.2f%%%%) is below Bitstamp&#39;s minimum order volume limit (0.003 BTC).  Gotta HODL!!!&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@sell_percentage</span> ]
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+                                
+                                                                <span class="ruby-identifier">tweet</span> = <span class="ruby-string">&quot;Attempted SELL of %0.8f BTC (%0.2f%%) is below Bitstamp&#39;s minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@sell_percentage</span> ]
+                                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+
+                                                                <span class="ruby-keyword">break</span>
+                                                        <span class="ruby-keyword">end</span>
+
+                                                        <span class="ruby-comment"># Place ASK order</span>
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;SELLing %0.8f BTC (%0.2f%%%% of %s BTC) at MARKET&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$volume</span>, <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">balance</span> ] 
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+                                                        <span class="ruby-identifier">$order_id</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">create_venue_account_order_market</span>( <span class="ruby-string">&quot;sell&quot;</span>, <span class="ruby-identifier">$volume</span>, <span class="ruby-string">&quot;btc_usd&quot;</span> )
+
+                                                        <span class="ruby-comment"># Get Order Info</span>
+                                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">15</span>
+                                                        <span class="ruby-identifier">$order_info</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_order</span>( <span class="ruby-identifier">$order_id</span> )
+                                                        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Placed order %s at %s&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueOrderId&#39;</span>], <span class="ruby-ivar">@exchange</span> ] 
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>)
+
+                                                <span class="ruby-keyword">else</span>
+                                                        <span class="ruby-comment"># HODL</span>
+                                                        <span class="ruby-identifier">$order_id</span> = <span class="ruby-keyword">nil</span>
+                                        <span class="ruby-keyword">end</span> <span class="ruby-comment"># case $decision</span>
+
+                                        <span class="ruby-comment"># Perform trade follow-up tasks if a trade was executed</span>
+                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">$order_id</span>
+                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;Checking Cryptomnio order %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_id</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-identifier">message</span>) <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+                                                <span class="ruby-comment"># Wait until order clears or is otherwise closed</span>
+                                                <span class="ruby-keyword">while</span> <span class="ruby-operator">!</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueStatus&#39;</span>] <span class="ruby-operator">||</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueStatus&#39;</span>].<span class="ruby-identifier">downcase</span> <span class="ruby-operator">!=</span> <span class="ruby-string">&#39;filled&#39;</span> <span class="ruby-keyword">do</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueStatus&#39;</span>] <span class="ruby-operator">&amp;&amp;</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;venueStatus&#39;</span>].<span class="ruby-identifier">downcase</span> <span class="ruby-operator">==</span> <span class="ruby-string">&#39;cancelled&#39;</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;ERROR: Order %s cancelled by exchange!&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_id</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+                                                                <span class="ruby-identifier">raise</span> <span class="ruby-identifier">message</span>
+                                                                <span class="ruby-keyword">break</span>
+                                                        <span class="ruby-keyword">end</span>
+                                                        <span class="ruby-keyword">if</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;cryptomnioStatus&#39;</span>] <span class="ruby-operator">==</span> <span class="ruby-string">&#39;rejected&#39;</span>
+                                                                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;ERROR: Order %s rejected by Cryptomnio!&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_id</span>
+                                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+                                                                <span class="ruby-identifier">raise</span> <span class="ruby-identifier">message</span>
+                                                                <span class="ruby-keyword">break</span>
+                                                        <span class="ruby-keyword">end</span>
+                                                        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>( <span class="ruby-string">&quot;Waiting for order %s to clear...&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_id</span> )
+                                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">3</span>
+                                                        <span class="ruby-identifier">$order_info</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_order</span>( <span class="ruby-identifier">$order_id</span> )
+                                                <span class="ruby-keyword">end</span>
+
+                                                <span class="ruby-comment"># Update ticker</span>
+                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_ticker</span>
+
+                                                <span class="ruby-comment"># TODO: Get USD value of trade from trade result.  For now, we calculate it ourselves:</span>
+                                                <span class="ruby-identifier">usd_value</span> = ( <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&#39;quantity&#39;</span>].<span class="ruby-identifier">to_f</span> <span class="ruby-operator">*</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> ).<span class="ruby-identifier">round</span>(<span class="ruby-value">2</span>)
+
+                                                <span class="ruby-comment"># Post trade results</span>
+                                                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">info</span>(<span class="ruby-string">&quot;Tweeting trade results...&quot;</span>)
+                                                <span class="ruby-keyword">case</span> <span class="ruby-identifier">$decision</span>
+                                                        <span class="ruby-keyword">when</span> <span class="ruby-string">&quot;BUY&quot;</span>
+                                                        <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;Trade on Bitstamp Complete:\n\n&quot;</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;BUY %0.2f%% of USD ($%0.2f USD): %s BTC\n&quot;</span>  <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@buy_percentage</span>, <span class="ruby-identifier">usd_value</span>, <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&quot;quantity&quot;</span>] ]
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Trading fee: $%0.2f\n\n&quot;</span>                    <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&quot;fee&quot;</span>].<span class="ruby-identifier">to_f</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Trade powered by @Blockhenge™ #Cryptomnio™&quot;</span>
+                                                <span class="ruby-keyword">when</span> <span class="ruby-string">&quot;SELL&quot;</span>
+                                                        <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;Trade on Bitstamp Complete:\n\n&quot;</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;SELL %0.2f%% of BTC: %s BTC ($%0.2f USD)\n&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@sell_percentage</span>, <span class="ruby-identifier">usd_value</span>, <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&quot;quantity&quot;</span>] ]
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Trading fee: $%0.2f\n\n&quot;</span>                    <span class="ruby-operator">%</span> <span class="ruby-identifier">$order_info</span>[<span class="ruby-string">&quot;fee&quot;</span>].<span class="ruby-identifier">to_f</span>
+                                                        <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Trade powered by @Blockhenge™ #Cryptomnio™&quot;</span>
+                                                <span class="ruby-keyword">end</span>
+                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+
+                                                <span class="ruby-comment"># Sleep for a few seconds so balances can update via the exchange</span>
+                                                <span class="ruby-identifier">sleep</span> <span class="ruby-value">15</span>
+
+                                                <span class="ruby-comment"># Save old balances</span>
+                                                <span class="ruby-ivar">@btc_balance_previous</span> = <span class="ruby-ivar">@btc_balance</span>
+                                                <span class="ruby-ivar">@usd_balance_previous</span> = <span class="ruby-ivar">@usd_balance</span>
+                                                
+                                                <span class="ruby-comment"># Refresh Account Balances</span>
+                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">update_balances</span>
+                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;BTC Balance: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@btc_balance</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;USD Balance: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@usd_balance</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+                                                <span class="ruby-comment"># Calculate change in balances due to most recent trade</span>
+                                                <span class="ruby-identifier">$btc_diff_value</span>   = <span class="ruby-ivar">@btc_balance</span> <span class="ruby-operator">-</span> <span class="ruby-ivar">@btc_balance_previous</span>
+                                                <span class="ruby-identifier">$usd_diff_value</span>   = <span class="ruby-ivar">@usd_balance</span> <span class="ruby-operator">-</span> <span class="ruby-ivar">@usd_balance_previous</span>
+                                                <span class="ruby-identifier">$btc_diff_percent</span> = (<span class="ruby-identifier">$btc_diff_value</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@btc_balance_previous</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span> 
+                                                <span class="ruby-identifier">$usd_diff_percent</span> = (<span class="ruby-identifier">$usd_diff_value</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@usd_balance_previous</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span> 
+
+                                                <span class="ruby-comment"># Calculate total account value in both BTC and USD</span>
+                                                <span class="ruby-identifier">$btc_total</span> = <span class="ruby-ivar">@btc_balance</span> <span class="ruby-operator">+</span> ( <span class="ruby-ivar">@usd_balance</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> )
+                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;BTC Account Value: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@btc_total</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                <span class="ruby-identifier">$usd_total</span> = <span class="ruby-ivar">@usd_balance</span> <span class="ruby-operator">+</span> ( <span class="ruby-ivar">@btc_balance</span> <span class="ruby-operator">*</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> )
+                                                <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;USD Account Value: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@usd_total</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+                                                <span class="ruby-comment"># Calculate change in total account value</span>
+                                                <span class="ruby-identifier">$btc_start_diff_value</span>   = <span class="ruby-identifier">$btc_total</span> <span class="ruby-operator">-</span> ( <span class="ruby-constant">STARTING_BTC</span> <span class="ruby-operator">+</span> ( <span class="ruby-constant">STARTING_USD</span> <span class="ruby-operator">/</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> ) )
+                                                <span class="ruby-identifier">$btc_start_diff_percent</span> = (<span class="ruby-identifier">$btc_start_diff_value</span> <span class="ruby-operator">/</span> <span class="ruby-identifier">$btc_total</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span>
+                                                <span class="ruby-identifier">$usd_start_diff_value</span>   = <span class="ruby-identifier">$usd_total</span> <span class="ruby-operator">-</span> ( <span class="ruby-constant">STARTING_USD</span> <span class="ruby-operator">+</span> ( <span class="ruby-constant">STARTING_BTC</span> <span class="ruby-operator">*</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>].<span class="ruby-identifier">to_f</span> ) )
+                                                <span class="ruby-identifier">$usd_start_diff_percent</span> = (<span class="ruby-identifier">$usd_start_diff_value</span> <span class="ruby-operator">/</span> <span class="ruby-identifier">$usd_total</span>) <span class="ruby-operator">*</span> <span class="ruby-value">100</span>
+
+                                                <span class="ruby-comment"># Post Balances Tweet</span>
+                                                <span class="ruby-identifier">tweet</span>  = <span class="ruby-string">&quot;Account Balances after trade:\n\n&quot;</span>
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n&quot;</span>     <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-identifier">$btc_diff_value</span>, <span class="ruby-identifier">$btc_diff_percent</span> ]
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@usd_balance</span>, <span class="ruby-identifier">$usd_diff_value</span>, <span class="ruby-identifier">$usd_diff_percent</span> ]
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Total Account Value:\n\n&quot;</span>
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n&quot;</span>     <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$btc_total</span>, <span class="ruby-identifier">$btc_start_diff_value</span>, <span class="ruby-identifier">$btc_start_diff_percent</span> ]
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;USD: $%0.2f\n(%+0.2f / %+0.2f%%)\n\n&quot;</span>  <span class="ruby-operator">%</span> [ <span class="ruby-identifier">$usd_total</span>, <span class="ruby-identifier">$usd_start_diff_value</span>, <span class="ruby-identifier">$usd_start_diff_percent</span> ]
+                                                <span class="ruby-identifier">tweet</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Current BTC/USD Spot: $%s&quot;</span>            <span class="ruby-operator">%</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>]
+                                                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>].<span class="ruby-identifier">id</span> )
+                                        <span class="ruby-keyword">end</span> <span class="ruby-comment"># if $order_id</span>
+
+                                        <span class="ruby-comment"># Wait at least one minute since last operation</span>
+                                        <span class="ruby-identifier">sleep</span> <span class="ruby-value">60</span> <span class="ruby-keyword">if</span> <span class="ruby-operator">!</span> <span class="ruby-constant">SPEEDMODE</span>
+                                <span class="ruby-keyword">else</span>
+                                        <span class="ruby-keyword">if</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lastmin</span>] <span class="ruby-operator">!=</span> <span class="ruby-ivar">@minute</span>
+                                                <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:dots</span>] = <span class="ruby-string">&quot;&quot;</span>
+                                        <span class="ruby-keyword">else</span>
+                                                <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:dots</span>] <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;.&quot;</span>
+                                        <span class="ruby-keyword">end</span> 
+                                        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+
+                                        <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                                                <span class="ruby-identifier">printf</span>(<span class="ruby-string">&quot;\rWaiting until minute 55... (Current minute: %02d) %s          &quot;</span>, <span class="ruby-ivar">@minute</span>, <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:dots</span>])
+                                                <span class="ruby-constant">STDOUT</span>.<span class="ruby-identifier">flush</span>
+                                                <span class="ruby-identifier">sleep</span> <span class="ruby-value">0.05</span>
+                                        <span class="ruby-keyword">end</span>
+                                <span class="ruby-keyword">end</span>
+                        <span class="ruby-keyword">end</span> <span class="ruby-comment"># case when 55</span>
+                <span class="ruby-keyword">end</span> <span class="ruby-comment"># While loop</span>
+        <span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;ERROR: %s (exiting...)&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+                <span class="ruby-identifier">puts</span> <span class="ruby-identifier">message</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+                <span class="ruby-keyword">self</span>.<span class="ruby-identifier">shutdown</span>
+                <span class="ruby-identifier">exit</span>
+        <span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-tweet" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">tweet</span><span
+            class="method-args">( tweet, in_reply_to_status_id: nil )</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Twitter update wrapper to add length checking and debug output</p>
+          
+          
+
+          
+          <div class="method-source-code" id="tweet-source">
+            <pre><span class="ruby-comment"># File tctb, line 248</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">tweet</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-keyword">nil</span> )
+        <span class="ruby-comment"># Check to ensure that the tweet isn&#39;t too long</span>
+        <span class="ruby-keyword">if</span> <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">length</span> <span class="ruby-operator">&gt;</span> <span class="ruby-value">280</span>
+                <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;ERROR: Poll tweet too long! (%d characters)&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">tweet</span>.<span class="ruby-identifier">length</span>
+                <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">err</span>( <span class="ruby-identifier">message</span> )
+                <span class="ruby-identifier">raise</span> <span class="ruby-identifier">message</span>
+        <span class="ruby-keyword">end</span>
+
+        <span class="ruby-comment"># DEBUG Output</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;Tweeting:\n&#39;&#39;&#39;\n%s\n&#39;&#39;&#39;&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">tweet</span> <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+        <span class="ruby-comment"># Tweet the tweet and save the tweet as the last tweet</span>
+        <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>] = <span class="ruby-ivar">@twitter</span>.<span class="ruby-identifier">update</span>( <span class="ruby-identifier">tweet</span>, <span class="ruby-value">in_reply_to_status_id:</span> <span class="ruby-identifier">in_reply_to_status_id</span> ) 
+        <span class="ruby-keyword">self</span>.<span class="ruby-identifier">save_state</span>
+
+        <span class="ruby-comment"># Return the tweet</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-ivar">@persist</span>[<span class="ruby-value">:lasttweet</span>]
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-update_balances" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">update_balances</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Update Account Balances from exchange</p>
+          
+          
+
+          
+          <div class="method-source-code" id="update_balances-source">
+            <pre><span class="ruby-comment"># File tctb, line 268</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">update_balances</span>
+        <span class="ruby-comment"># Get individual balances from exchange</span>
+        <span class="ruby-ivar">@btc_balance</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_balance_symbol</span>( <span class="ruby-string">&#39;btc&#39;</span> )
+        <span class="ruby-ivar">@usd_balance</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_account_balance_symbol</span>( <span class="ruby-string">&#39;usd&#39;</span> )
+
+        <span class="ruby-comment"># DEBUG Output</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;Account Balances: BTC: %s | USD: $%s&quot;</span> <span class="ruby-operator">%</span> [ <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-ivar">@usd_balance</span> ] <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+        <span class="ruby-comment"># Return hash of balances</span>
+        <span class="ruby-identifier">balances</span> = { <span class="ruby-value">:btc</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-value">:usd</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-ivar">@usd_balance</span> }
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">balances</span>
+<span class="ruby-keyword">rescue</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-identifier">e</span>
+        <span class="ruby-comment"># Not critical if this call errors, log it and return current balances</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;WARNING: Error when updating balances: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
+
+        <span class="ruby-comment"># Return current hash of balances</span>
+        <span class="ruby-identifier">balances</span> = { <span class="ruby-value">:btc</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-ivar">@btc_balance</span>, <span class="ruby-value">:usd</span> <span class="ruby-operator">=&gt;</span> <span class="ruby-ivar">@usd_balance</span> }
+        <span class="ruby-keyword">return</span> <span class="ruby-identifier">balances</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-update_ticker" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">update_ticker</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="update_ticker-source">
+            <pre><span class="ruby-comment"># File tctb, line 289</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier ruby-title">update_ticker</span>
+        <span class="ruby-comment"># Get new ticker from exchange</span>
+        <span class="ruby-ivar">@ticker</span> = <span class="ruby-ivar">@cryptomnio</span>.<span class="ruby-identifier">retrieve_venue_market_ticker</span>( <span class="ruby-string">&quot;btc_usd&quot;</span> )
+
+        <span class="ruby-comment"># DEBUG Output</span>
+        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;Ticker: %s\n&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-ivar">@ticker</span>[<span class="ruby-string">&#39;price&#39;</span>] <span class="ruby-keyword">if</span> <span class="ruby-constant">VERBOSITY</span> <span class="ruby-operator">&gt;=</span> <span class="ruby-value">2</span>
+
+        <span class="ruby-comment"># Return ticker</span>
+        <span class="ruby-keyword">return</span> <span class="ruby-ivar">@ticker</span>
+<span class="ruby-keyword">rescue</span>
+        <span class="ruby-comment"># Not critical if this call errors, log it and return current ticker</span>
+        <span class="ruby-identifier">message</span> = <span class="ruby-string">&quot;WARNING: Error when updating ticker: %s&quot;</span> <span class="ruby-operator">%</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">message</span>
+        <span class="ruby-constant">Syslog</span>.<span class="ruby-identifier">warning</span>( <span class="ruby-identifier">message</span> )
+
+        <span class="ruby-comment"># Return current ticker</span>
+        <span class="ruby-ivar">@ticker</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+    </section>
+  
+  </section>
+</main>
+
+
+<footer id="validator-badges" role="contentinfo">
+  <p><a href="https://validator.w3.org/check/referer">Validate</a>
+  <p>Generated by <a href="https://ruby.github.io/rdoc/">RDoc</a> 6.0.1.
+  <p>Based on <a href="http://deveiate.org/projects/Darkfish-RDoc/">Darkfish</a> by <a href="http://deveiate.org">Michael Granger</a>.
+</footer>
+
