@@ -28,8 +28,9 @@ class TCTBot
 	WORKING_DIR = Dir.home + '/.tctb/'
 	# SPEEDMODE causes the bot to run in a compressed timeframe, 1 min == 1 sec
 	SPEEDMODE = false
-	# How much BTC did the bot's account start with?
+	# How much BTC did the bot's account start with? (moving to config file)
 	STARTING_BTC = 0.5
+	# How much USD did the bot's account start with? (moving to config file)
 	STARTING_USD = 0
 
 	# Initialization
@@ -84,7 +85,7 @@ class TCTBot
 		self.save_state
 	end
 
-	# Shutdown
+	# Graceful Shutdown - Calls save_state and save_influencers for all influencer databases
 	def shutdown
 		message = "Shutting down..." % e.message
 		Syslog.info( message )
@@ -120,7 +121,7 @@ class TCTBot
 		exit
 	end
 
-	# Read YAML File for persistent state variables
+	# Load YAML file for persistent state variables
 	def load_state
 		filename = Pathname.new( WORKING_DIR + 'tctb.state' )
 		if ! filename.exist?
@@ -157,7 +158,7 @@ class TCTBot
 		exit
 	end
 
-	# Save YAML File for persistent state variables
+	# Save YAML file for persistent state variables
 	def save_state
 		filename = Pathname.new( WORKING_DIR + 'tctb.state' )
 		File.open( filename, 'w' ) {|f| f.write @persist.to_yaml }
@@ -171,9 +172,9 @@ class TCTBot
 		exit
 	end
 
-# TODO: Connect to Database for influencers and voting statistics
-# fudge it with some hashes for now
+	# Load the influencers databases from the filesystem
 	def load_influencers( filename )
+# TODO: Connect to Database for influencers and voting statistics
 		filename = Pathname.new( WORKING_DIR + filename )
 		if ! filename.exist?
 			# File doesn't exist, initialize it
@@ -204,6 +205,7 @@ class TCTBot
 		exit
 	end
 
+	# Save the influencers databases to the filesystem
 	def save_influencers( timeframe, influencers )
 		case timeframe
 			when :day
@@ -228,6 +230,7 @@ class TCTBot
 		exit
 	end
 
+	# Extract a leaderboard with <entries> number of users from timeframe's database
 	def get_leaderboard( timeframe, entries )
 		case timeframe
 			when :day
@@ -244,7 +247,7 @@ class TCTBot
 		return leaders[0..4]
 	end
 
-	# Twitter update wrapper to add length checking and debug output
+	# Twitter.update wrapper to add length checking and debug output. Tweets <tweet>, optionally in reply to <in_reply_to_status_id>
 	def tweet( tweet, in_reply_to_status_id: nil )
 		# Check to ensure that the tweet isn't too long
 		if tweet.length > 280
@@ -286,6 +289,7 @@ class TCTBot
 		return balances
 	end
 
+	# Update Ticker (market price)
 	def update_ticker
 		# Get new ticker from exchange
 		@ticker = @cryptomnio.retrieve_venue_market_ticker( "btc_usd" )
@@ -304,6 +308,7 @@ class TCTBot
 		@ticker
 	end
 
+	# Connect the object instance to its configured Twitter account
 	def connect_twitter
 		# Get Twitter Handle from config
 		@twitter_handle = @configfile[:twitter][:username]
@@ -322,6 +327,7 @@ class TCTBot
 		return twitter
 	end
 
+	# Connect the object instance to its configured Cryptomnio account
 	def connect_cryptomnio
 		# Create Cryptomnio client object
 		cryptomnio = Cryptomnio::REST::Client.new do |c|
