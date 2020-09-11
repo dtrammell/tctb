@@ -681,7 +681,7 @@ class TCTBot
 									message = "Attemtped BUY of %0.8f BTC (%0.2f%%%% of $%0.2f USD) is below Bitstamp's minimum order volume limit (0.003 BTC). Gotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
 									Syslog.info(message)
 					
-									tweet = "Attempted BUY of %0.8f BTC (%0.2f%% of $%0.2f USD) is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
+									tweet = "Attempted BUY of %0.8f BTC (%0.2f%% of $%0.2f USD) is below @Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 									break
@@ -717,7 +717,7 @@ class TCTBot
 									message = "Attemtped SELL of %0.8f BTC (%0.2f%%%%) is below Bitstamp's minimum order volume limit (0.003 BTC).  Gotta HODL!!!" % [ $volume, @sell_percentage ]
 									Syslog.info(message)
 					
-									tweet = "Attempted SELL of %0.8f BTC (%0.2f%%) is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @sell_percentage ]
+									tweet = "Attempted SELL of %0.8f BTC (%0.2f%%) is below @Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @sell_percentage ]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 									break
@@ -773,12 +773,12 @@ class TCTBot
 							Syslog.info("Tweeting trade results...")
 							case $decision
 								when "BUY"
-								tweet  = "Trade on Bitstamp Complete:\n\n"
+								tweet  = "Trade on @Bitstamp Complete:\n\n"
 								tweet << "BUY %0.2f%% of USD ($%0.2f USD): %s BTC\n"  % [ @buy_percentage, usd_value, $order_info["quantity"] ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
 							when "SELL"
-								tweet  = "Trade on Bitstamp Complete:\n\n"
+								tweet  = "Trade on @Bitstamp Complete:\n\n"
 								tweet << "SELL %0.2f%% of BTC: %s BTC ($%0.2f USD)\n" % [ @sell_percentage, usd_value, $order_info["quantity"] ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
