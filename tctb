@@ -87,7 +87,7 @@ class TCTBot
 
 	# Graceful Shutdown - Calls save_state and save_influencers for all influencer databases
 	def shutdown
-		message = "Shutting down..." % e.message
+		message = "Shutting down..."
 		Syslog.info( message )
 		puts message if VERBOSITY >= 2
 
@@ -560,10 +560,9 @@ class TCTBot
 							votes = {}
 							for tweet in replies do
 								# Parse the tweet text for the vote keywords
-								tweet.text =~ /buy/i  ? buy  = true  : buy  = false 
-								tweet.text =~ /sell/i ? sell = true  : sell = false 
-								tweet.text =~ /hodl/i ? hodl = true  : hodl = false 
-								tweet.text =~ /hold/i ? hodl = true  : hodl = false 
+								tweet.text =~ /buy/i       ? buy  = true  : buy  = false 
+								tweet.text =~ /sell/i      ? sell = true  : sell = false 
+								tweet.text =~ /hodl|hold/i ? hodl = true  : hodl = false 
 								# Ensure that the tweet only contains one keyword
 								if [buy, sell, hodl].one?
 									# Add the voted keyword to the votes hash. Most recent vote per user will be counted.
@@ -584,7 +583,7 @@ class TCTBot
 								Syslog.info( "Only received %d votes (minimum %d), HODL!"    % [ votes.count, @votes_min ] ) if VERBOSITY >= 1
 								tweet  = "Voting closed for poll %d.\n\n"                    % @pollid
 								tweet << "Not enough votes to make a decision.  HODL!!!\n\n"
-								tweet << "(Need minimum %d vote, got %d votes..."            % [ @votes_min, votes.count ]
+								tweet << "(Need a minimum of %d votes, got %d votes..."            % [ @votes_min, votes.count ]
 								tweet << "Maybe you should retweet my poll tweet?)"
 								self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id ) 
 								$decision = "HODL"
@@ -633,7 +632,7 @@ class TCTBot
 									message = "Result of Poll %d was a tie! I'm gonna %s. Vote Tally: [ BUY:  %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
 									Syslog.info(message)
 
-									tweet = "Result of Poll %d was a tie! I'm gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
+									tweet = "Result of Poll %d was a tie!\n\nI'm gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 								else
 									# Winner!
@@ -679,10 +678,10 @@ class TCTBot
 
 								# Sanity check volume to make sure it's not below minimum exchange trade limits
 								if $volume < 0.003
-									message = "Attemtped BUY of %0.8f BTC (%0.2f%%%% of %0.2f%%%% USD) is below Bitstamp's minimum order volume limit (0.003 BTC). Gotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
+									message = "Attemtped BUY of %0.8f BTC (%0.2f%%%% of $%0.2f USD) is below Bitstamp's minimum order volume limit (0.003 BTC). Gotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
 									Syslog.info(message)
 					
-									tweet = "Attempted BUY of %0.8f BTC (%0.2f%% of %0.2f%% USD) is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
+									tweet = "Attempted BUY of %0.8f BTC (%0.2f%% of $%0.2f USD) is below Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 									break
