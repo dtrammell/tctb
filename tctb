@@ -80,7 +80,7 @@ class TCTBot
 		# Global Variables Initialization
 		@shutdown              = false
 		@time                  = Time.now
-		@minute                = 1
+		$minute                = 1
 		@votes_min             = 3
 		@persist[:lastmin]   ||= @time.min
 		@persist[:dots]        = ""
@@ -391,7 +391,8 @@ class TCTBot
 				@time = Time.now
 
 				# Save current values for conditionals later or initialize them as current
-				@minute ? @persist[:lastmin]   = @minute : @minute = @time.min
+				$minute ? @persist[:lastmin]   = $minute : $minute = @time.min
+				$hour   ? @persist[:lasthour]  = $hour   : $hour   = @time.hour
 				$month  ? @persist[:lastmonth] = $month  : $month  = @time.month
 				self.save_state
 
@@ -399,16 +400,19 @@ class TCTBot
 				if ! SPEEDMODE
 					# Get the current minute if not in SPEEDMODE mode
 					$second = @time.sec
-					@minute = @time.min
+					$minute = @time.min
 					$hour   = @time.hour
 					$day    = @time.day
 			  		$month  = @time.month
-					puts "\n%02d/%02d %02d:%02d" % [ $month, $day, $hour, @minute ] if VERBOSITY >= 3
+					puts "\n%02d/%02d %02d:%02d" % [ $month, $day, $hour, $minute ] if VERBOSITY >= 3
 				else
 					# Speed through minutes (1 per second) in SPEEDMODE mode
 					sleep 1
-					@minute += 1
-					@minute = 0 if @minute == 60 
+					$minute += 1
+					if $minute == 60
+						$minute = 0
+						$hour += 1
+					end
 				end
 
 				##
@@ -439,7 +443,7 @@ class TCTBot
 
 				# On the Week
 				case
-					when @time.sunday? && $hour == 00 & @minute = 00
+					when @time.sunday? && $hour == 00 & $minute = 00
 						leaders = self.get_leaderboard( :week, 5 )
 				
 						tweet = "%s's Top 5 Weekly Influencers:\n\n" % @twitter_handle
@@ -459,7 +463,7 @@ class TCTBot
 
 				# On the Hour
 				case
-					when $hour == 23 && @minute == 59 # Just before Midnight
+					when $hour == 23 && $minute == 59 # Just before Midnight
 						leaders = self.get_leaderboard( :day, 5 )
 
 						tweet  = "%s's Top 5 Daily Influencers:\n" % @twitter_handle
@@ -478,7 +482,7 @@ class TCTBot
 				end
 
 				# On the Minute
-				case @minute
+				case $minute
 
 					when 00 # Minute 00: Post a new Poll
 						# Refresh Account Balances
@@ -836,7 +840,7 @@ class TCTBot
 						# Wait at least one minute since last operation
 						sleep 60 if ! SPEEDMODE
 					else
-						if @persist[:lastmin] != @minute
+						if @persist[:lastmin] != $minute
 							@persist[:dots] = ""
 						else
 							@persist[:dots] << "."
@@ -844,7 +848,7 @@ class TCTBot
 						self.save_state
 
 						if VERBOSITY >= 2
-							printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", @minute, @persist[:dots])
+							printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", $minute, @persist[:dots])
 							STDOUT.flush
 							sleep 0.05
 						end
