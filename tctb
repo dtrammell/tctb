@@ -15,7 +15,7 @@ require 'yaml'
 # Global Constants
 
 # Verbosity level: 0 is silent | 1 is normal (syslog) | 2+ is DEBUG output (syslog + console)
-VERBOSITY = 1
+VERBOSITY = 3
 
 # TCTBot Class
 class TCTBot
@@ -34,7 +34,7 @@ class TCTBot
 	# How much BTC did the bot's account start with? (moving to config file)
 	STARTING_BTC = 0.5
 	# How much USD did the bot's account start with? (moving to config file)
-	STARTING_USD = 0
+	STARTING_USD = 5000
 
 	# Initialization
 	def initialize
@@ -81,7 +81,7 @@ class TCTBot
 		@shutdown              = false
 		@time                  = Time.now
 		@minute                = 1
-		@votes_min             = 1
+		@votes_min             = 3
 		@persist[:lastmin]   ||= @time.min
 		@persist[:dots]        = ""
 		@persist[:lastmonth] ||= @time.month
@@ -793,6 +793,9 @@ class TCTBot
 
 						end # if $order_id
 
+						# Update ticker
+						self.update_ticker
+
 						# Save old balances
 						@btc_balance_previous = @btc_balance
 						@usd_balance_previous = @usd_balance
@@ -852,6 +855,7 @@ class TCTBot
 			message = "ERROR: %s (exiting...)" % e.message
 			Syslog.err( message )
 			puts message if VERBOSITY >= 2
+			puts e.backtrace if $DEBUG
 			self.shutdown
 			exit
 		end # def start
