@@ -1,5 +1,8 @@
 #!/usr/bin/ruby
 
+# Use this version of the Cryptomnio gem or things will break!
+gem 'cryptomnio', '=0.0.2.pre'
+
 # Requirements
 require 'cryptomnio'
 require 'date'
