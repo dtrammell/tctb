@@ -583,8 +583,8 @@ class TCTBot
 								Syslog.info( "Only received %d votes (minimum %d), HODL!"    % [ votes.count, @votes_min ] ) if VERBOSITY >= 1
 								tweet  = "Voting closed for poll %d.\n\n"                    % @pollid
 								tweet << "Not enough votes to make a decision.  HODL!!!\n\n"
-								tweet << "(Need a minimum of %d votes, got %d votes..."            % [ @votes_min, votes.count ]
-								tweet << "Maybe you should retweet my poll tweet?)"
+								tweet << "(Need a minimum of %d votes, got %d votes... "             % [ @votes_min, votes.count ]
+								tweet << "Maybe you should retweet my upcoming poll tweet?)"
 								self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id ) 
 								$decision = "HODL"
 							else
