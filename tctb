@@ -775,14 +775,14 @@ class TCTBot
 							# Post trade results
 							Syslog.info("Tweeting trade results...")
 							case $decision
-								when "BUY"
+							when "BUY"
 								tweet  = "Trade on Bitstamp Complete:\n\n"
 								tweet << "BUY %0.2f%% of USD ($%0.2f USD): %s BTC\n"  % [ @buy_percentage, usd_value, $order_info["quantity"] ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
 							when "SELL"
 								tweet  = "Trade on Bitstamp Complete:\n\n"
-								tweet << "SELL %0.2f%% of BTC: %s BTC ($%0.2f USD)\n" % [ @sell_percentage, usd_value, $order_info["quantity"] ]
+								tweet << "SELL %0.2f%% of BTC: $%0.8f BTC (%s USD)\n" % [ @sell_percentage, $order_info["quantity"], usd_value ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
 							end
@@ -791,43 +791,44 @@ class TCTBot
 							# Sleep for a few seconds so balances can update via the exchange
 							sleep 15
 
-							# Save old balances
-							@btc_balance_previous = @btc_balance
-							@usd_balance_previous = @usd_balance
-							
-							# Refresh Account Balances
-							self.update_balances
-							puts "BTC Balance: %s" % @btc_balance if VERBOSITY >= 2
-							puts "USD Balance: %s" % @usd_balance if VERBOSITY >= 2
-
-							# Calculate change in balances due to most recent trade
-							$btc_diff_value   = @btc_balance - @btc_balance_previous
-							$usd_diff_value   = @usd_balance - @usd_balance_previous
-							$btc_diff_percent = ($btc_diff_value / @btc_balance_previous) * 100 
-							$usd_diff_percent = ($usd_diff_value / @usd_balance_previous) * 100 
-
-							# Calculate total account value in both BTC and USD
-							$btc_total = @btc_balance + ( @usd_balance / @ticker['price'].to_f )
-							puts "BTC Account Value: %s" % @btc_total if VERBOSITY >= 2
-							$usd_total = @usd_balance + ( @btc_balance * @ticker['price'].to_f )
-							puts "USD Account Value: %s" % @usd_total if VERBOSITY >= 2
-
-							# Calculate change in total account value
-							$btc_start_diff_value   = $btc_total - ( STARTING_BTC + ( STARTING_USD / @ticker['price'].to_f ) )
-							$btc_start_diff_percent = ($btc_start_diff_value / $btc_total) * 100
-							$usd_start_diff_value   = $usd_total - ( STARTING_USD + ( STARTING_BTC * @ticker['price'].to_f ) )
-							$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
-
-							# Post Balances Tweet
-							tweet  = "Account Balances after trade:\n\n"
-							tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
-							tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
-							tweet << "Total Account Value:\n\n"
-							tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ $btc_total, $btc_start_diff_value, $btc_start_diff_percent ]
-							tweet << "USD: $%0.2f\n(%+0.2f / %+0.2f%%)\n\n"  % [ $usd_total, $usd_start_diff_value, $usd_start_diff_percent ]
-							tweet << "Current BTC/USD Spot: $%s"            % @ticker['price']
-							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 						end # if $order_id
+
+						# Save old balances
+						@btc_balance_previous = @btc_balance
+						@usd_balance_previous = @usd_balance
+							
+						# Refresh Account Balances
+						self.update_balances
+						puts "BTC Balance: %s" % @btc_balance if VERBOSITY >= 2
+						puts "USD Balance: %s" % @usd_balance if VERBOSITY >= 2
+
+						# Calculate change in balances due to most recent trade
+						$btc_diff_value   = @btc_balance - @btc_balance_previous
+						$usd_diff_value   = @usd_balance - @usd_balance_previous
+						$btc_diff_percent = ($btc_diff_value / @btc_balance_previous) * 100 
+						$usd_diff_percent = ($usd_diff_value / @usd_balance_previous) * 100 
+
+						# Calculate total account value in both BTC and USD
+						$btc_total = @btc_balance + ( @usd_balance / @ticker['price'].to_f )
+						puts "BTC Account Value: %s" % @btc_total if VERBOSITY >= 2
+						$usd_total = @usd_balance + ( @btc_balance * @ticker['price'].to_f )
+						puts "USD Account Value: %s" % @usd_total if VERBOSITY >= 2
+
+						# Calculate change in total account value
+						$btc_start_diff_value   = $btc_total - ( STARTING_BTC + ( STARTING_USD / @ticker['price'].to_f ) )
+						$btc_start_diff_percent = ($btc_start_diff_value / $btc_total) * 100
+						$usd_start_diff_value   = $usd_total - ( STARTING_USD + ( STARTING_BTC * @ticker['price'].to_f ) )
+						$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
+
+						# Post Balances Tweet
+						tweet  = "Account Balances after trade:\n\n"
+						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
+						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
+						tweet << "Total Account Value:\n\n"
+						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ $btc_total, $btc_start_diff_value, $btc_start_diff_percent ]
+						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"  % [ $usd_total, $usd_start_diff_value, $usd_start_diff_percent ]
+						tweet << "Current BTC/USD Spot: $%s"            % @ticker['price']
+						self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 						# Wait at least one minute since last operation
 						sleep 60 if ! SPEEDMODE
