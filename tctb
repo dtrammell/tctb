@@ -812,8 +812,18 @@ class TCTBot
 						# Calculate change in balances due to most recent trade
 						$btc_diff_value   = @btc_balance - @btc_balance_previous
 						$usd_diff_value   = @usd_balance - @usd_balance_previous
-						$btc_diff_percent = ($btc_diff_value / @btc_balance_previous) * 100 
-						$usd_diff_percent = ($usd_diff_value / @usd_balance_previous) * 100 
+						if $btc_diff_value == 0 && @btc_balance_previous == 0
+							# Don't divide by 0
+							$btc_diff_percent = 0
+						else
+							$btc_diff_percent = ($btc_diff_value / @btc_balance_previous) * 100 
+						end
+						if $usd_diff_percent == 0 && @usd_balance_previous == 0
+							# Don't divide by 0
+							$usd_diff_percent = 0
+						else
+							$usd_diff_percent = ($usd_diff_value / @usd_balance_previous) * 100 
+						end
 
 						# Calculate total account value in both BTC and USD
 						$btc_total = @btc_balance + ( @usd_balance / @ticker['price'].to_f )
