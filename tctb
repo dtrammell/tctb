@@ -836,7 +836,7 @@ class TCTBot
 						$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
 
 						# Post Balances Tweet
-						tweet  = "Account Balances after trade:\n\n"
+						tweet  = "Current Account Balances:\n\n"
 						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
 						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
 						tweet << "Total Account Value:\n\n"
