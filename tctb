@@ -382,6 +382,10 @@ class TCTBot
 		Syslog.info("Most recent %s tweet at startup: \"%s...\"", @twitter_handle, @persist[:lasttweet].text[0,26]) if VERBOSITY >= 1
 
 		# Scheduler Loop
+		$second = nil
+		$minute = nil
+		$hour   = nil
+		$month  = nil
 		while @shutdown != true
 			loop do	
 				# Don't iterate too fast unless we're in SPEEDMODE mode
@@ -393,6 +397,7 @@ class TCTBot
 				# Save current values for conditionals later or initialize them as current
 				$minute ? @persist[:lastmin]   = $minute : $minute = @time.min
 				$hour   ? @persist[:lasthour]  = $hour   : $hour   = @time.hour
+				$day    ? @persist[:lastday]   = $day    : $day    = @time.hour
 				$month  ? @persist[:lastmonth] = $month  : $month  = @time.month
 				self.save_state
 
@@ -404,7 +409,7 @@ class TCTBot
 					$hour   = @time.hour
 					$day    = @time.day
 			  		$month  = @time.month
-					puts "\n%02d/%02d %02d:%02d" % [ $month, $day, $hour, $minute ] if VERBOSITY >= 3
+					puts "\nCurrent Date & Time: %02d/%02d %02d:%02d" % [ $month, $day, $hour, $minute ] if $DEBUG
 				else
 					# Speed through minutes (1 per second) in SPEEDMODE mode
 					sleep 1
@@ -438,12 +443,14 @@ class TCTBot
 						self.save_influencers( :month, @influencers_month )
 
 						# TODO: Have the bot calculate monthly profits and distribute profits to the monthly leaderboard if they have registered a Bitcoin Address
+
+						sleep 60
 					else
 				end
 
 				# On the Week
 				case
-					when @time.sunday? && $hour == 00 & $minute = 00
+					when @time.sunday? && $hour == 00 && $minute = 00
 						leaders = self.get_leaderboard( :week, 5 )
 				
 						tweet = "%s's Top 5 Weekly Influencers:\n\n" % @twitter_handle
