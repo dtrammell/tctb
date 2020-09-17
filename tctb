@@ -236,18 +236,21 @@ class TCTBot
 	# Extract a leaderboard with <entries> number of users from timeframe's database
 	def get_leaderboard( timeframe, entries )
 		case timeframe
-			when :day
-				hash = @influencers_day
-			when :week
-				hash = @influencers_week
-			when :month
-				hash = @influencers_month
-			else
-				hash = @influencers_all
+		when :day
+			hash = @influencers_day
+		when :week
+			hash = @influencers_week
+		when :month
+			hash = @influencers_month
+		else
+			hash = @influencers_all
 		end
 
+		# Sort the entreies by value then reverse the hash so it's sorted decrementally
 		leaders = hash.sort_by {|key, value| value }.reverse
-		return leaders[0..4]
+
+		# Return the numnber of entries
+		return leaders[0..(entries - 1)]
 	end
 
 	# Twitter.update wrapper to add length checking and debug output. Tweets <tweet>, optionally in reply to <in_reply_to_status_id>
@@ -385,6 +388,7 @@ class TCTBot
 		$second = nil
 		$minute = nil
 		$hour   = nil
+		$day    = nil
 		$month  = nil
 		while @shutdown != true
 			loop do	
@@ -450,7 +454,7 @@ class TCTBot
 
 				# On the Week
 				case
-					when @time.sunday? && $hour == 00 && $minute = 00
+					when @time.saturday? && $hour == 23 && $minute = 59
 						leaders = self.get_leaderboard( :week, 5 )
 				
 						tweet = "%s's Top 5 Weekly Influencers:\n\n" % @twitter_handle
@@ -468,12 +472,12 @@ class TCTBot
 						sleep 60
 				end
 
-				# On the Hour
+				# On the Day
 				case
-					when $hour == 23 && $minute == 59 # Just before Midnight
+					when $hour == 23 && $minute == 58 # Just before Midnight
 						leaders = self.get_leaderboard( :day, 5 )
 
-						tweet  = "%s's Top 5 Daily Influencers:\n" % @twitter_handle
+						tweet  = "%s's Top 5 Daily Influencers:\n\n" % @twitter_handle
 						count = 0
 						leaders.each do |handle, votecount|
 							count += 1
@@ -621,6 +625,12 @@ class TCTBot
 									@influencers_all[name]   ? @influencers_all[name]   += 1 : @influencers_all[name] 	= 1
 								end
 
+								# Save the updated influencers data
+								save_influencers( :day,   @influencers_day   )
+								save_influencers( :week,  @influencers_week  )
+								save_influencers( :month, @influencers_month )
+								save_influencers( :all,   @influencers_all   )
+
 								# Calculate relative percentages of each position
 								@buy_percentage  = (tally[:buy].to_f  / votes.count) * 100 
 								@sell_percentage = (tally[:sell].to_f / votes.count) * 100
@@ -630,12 +640,6 @@ class TCTBot
 									puts "SELL percentage: %0.2f%%" % @sell_percentage
 									puts "HODL percentage: %0.2f%%" % @hodl_percentage
 								end
-
-								# Save the updated influencers data
-								save_influencers( :day,   @influencers_day   )
-								save_influencers( :week,  @influencers_week  )
-								save_influencers( :month, @influencers_month )
-								save_influencers( :all,   @influencers_all   )
 
 								# Find the largest number in the tally hash and return the associated key(s)
 								winner = tally.reduce({}){|h,(k,v)| (h[v] ||= []) << k;h}.max
@@ -752,6 +756,8 @@ class TCTBot
 								# HODL
 								$order_id = nil
 						end # case $decision
+
+						# TODO: Keep track of last 5 trades or so for a status tweet
 
 						# Perform trade follow-up tasks if a trade was executed
 						if $order_id
