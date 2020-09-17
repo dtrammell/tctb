@@ -31,10 +31,6 @@ class TCTBot
 	WORKING_DIR = Dir.home + '/.tctb/'
 	# SPEEDMODE causes the bot to run in a compressed timeframe, 1 min == 1 sec
 	SPEEDMODE = false
-	# How much BTC did the bot's account start with? (moving to config file)
-	STARTING_BTC = 0.5
-	# How much USD did the bot's account start with? (moving to config file)
-	STARTING_USD = 5000
 
 	# Initialization
 	def initialize
@@ -66,7 +62,9 @@ class TCTBot
 		@configfile = self.load_config
 
 		# Shorter variable names for frequently used config variables
-		@exchange = @configfile[:cryptomnio][:exchange]
+		@exchange     = @configfile[:cryptomnio][:exchange]
+		@starting_base = @configfile[:starting_btc]
+		@starting_quot = @configfile[:starting_usd]
 
 		# Load persistent state file
 		self.load_state
@@ -845,13 +843,13 @@ class TCTBot
 						puts "USD Account Value: %s" % @usd_total if VERBOSITY >= 2
 
 						# Calculate change in total account value
-						$btc_start_diff_value   = $btc_total - ( STARTING_BTC + ( STARTING_USD / @ticker['price'].to_f ) )
+						$btc_start_diff_value   = $btc_total - ( @starting_base + ( @starting_quot / @ticker['price'].to_f ) )
 						$btc_start_diff_percent = ($btc_start_diff_value / $btc_total) * 100
-						$usd_start_diff_value   = $usd_total - ( STARTING_USD + ( STARTING_BTC * @ticker['price'].to_f ) )
+						$usd_start_diff_value   = $usd_total - ( @starting_quot + ( @starting_base * @ticker['price'].to_f ) )
 						$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
 
 						# Post Balances Tweet
-						tweet  = "Account Balances after trade:\n\n"
+						tweet  = "Current Account Balances:\n\n"
 						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
 						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
 						tweet << "Total Account Value:\n\n"
