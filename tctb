@@ -62,14 +62,19 @@ class TCTBot
 		@configfile = self.load_config
 
 		# Shorter variable names for frequently used config variables
-		@exchange     = @configfile[:cryptomnio][:exchange]
-		@starting_base = @configfile[:starting_btc]
-		@starting_quot = @configfile[:starting_usd]
+		@exchange      = @configfile[:cryptomnio][:exchange]
+		@market        = @configfile[:market]
+		@base_currency = @market.scan(/^[^_]+/)[0].upcase # Match beginning of string to '_' character
+		@quot_currency = @market.scan(/[^_]+$/)[0].upcase # Match after underscore character to end of string
+		@starting_base = @configfile[:starting_base]
+		@starting_quot = @configfile[:starting_quot]
+		puts "Base: %s | Quot: %s" % [ @base_currency, @quot_currency ] if $DEBUG
 
 		# Load persistent state file
 		self.load_state
 
 		# Load the Influencers databases
+		# TODO: Combine these all into a single hash
 		@influencers_day   = load_influencers('influencers_day.dat')
 		@influencers_week  = load_influencers('influencers_week.dat')
 		@influencers_month = load_influencers('influencers_month.dat')
@@ -271,17 +276,17 @@ class TCTBot
 		return @persist[:lasttweet]
 	end
 
-	# Update Account Balances from exchange
-	def update_balances
+   # Update Account Balances from exchange
+   def update_balances
 		# Get individual balances from exchange
-		@btc_balance = @cryptomnio.retrieve_venue_account_balance_symbol( 'btc' )
-		@usd_balance = @cryptomnio.retrieve_venue_account_balance_symbol( 'usd' )
+		@base_balance = @cryptomnio.retrieve_venue_account_balance_symbol( @base_currency )
+		@quot_balance = @cryptomnio.retrieve_venue_account_balance_symbol( @quot_currency )
 
-		# DEBUG Output
-		puts "Account Balances: BTC: %s | USD: $%s" % [ @btc_balance, @usd_balance ] if VERBOSITY >= 2
+		# Output
+		puts "Account Balances: %s: %s | %s: $%s" % [ @base_currency, @base_balance, @quot_currency, @quot_balance ] if $VERBOSE
 
 		# Return hash of balances
-		balances = { :btc => @btc_balance, :usd => @usd_balance }
+		balances = { :base => @base_balance, :quot => @quot_balance }
 		return balances
 	rescue => e
 		# Not critical if this call errors, log it and return current balances
@@ -289,21 +294,21 @@ class TCTBot
 		Syslog.warning( message )
 
 		# Return current hash of balances
-		balances = { :btc => @btc_balance, :usd => @usd_balance }
+		balances = { :base => @base_balance, :quot => @quot_balance }
 		return balances
 	end
 
 	# Update Ticker (market price)
 	def update_ticker
 		# Get new ticker from exchange
-		@ticker = @cryptomnio.retrieve_venue_market_ticker( "btc_usd" )
+		@ticker = @cryptomnio.retrieve_venue_market_ticker( @market )
 
 		# DEBUG Output
 		puts "Ticker: %s\n" % @ticker['price'] if VERBOSITY >= 2
 
 		# Return ticker
 		return @ticker
-	rescue
+	rescue => e
 		# Not critical if this call errors, log it and return current ticker
 		message = "WARNING: Error when updating ticker: %s" % e.message
 		Syslog.warning( message )
@@ -374,7 +379,7 @@ class TCTBot
 
 		# Populate initial balances from exchange
 		self.update_balances
-		Syslog.info("Account Balances at startup: BTC: %s | USD: $%s", @btc_balance, @usd_balance ) if VERBOSITY >= 1 
+		Syslog.info("Account Balances at startup: %s: %s | %s: $%s" % [ @base_currency, @base_balance, @quot_currency, @quot_balance ] ) if $VERBOSE
 
 		# Retireve most recent tweet (index 0 of returned Enumerable)
 		# TODO: Find most recent POLL tweet, not just the most recent one (which may not be the poll)
@@ -427,32 +432,56 @@ class TCTBot
 
 				# On the Month
 				case
-					when $month != @persist[:lastmonth] # Month Change!
-						leaders = self.get_leaderboard( :month, 5 )
+				when $month != @persist[:lastmonth] # Month Change!
+					leaders = self.get_leaderboard( :month, 5 )
 
-						tweet = "%s's Top 5 Monthly Influencers:\n\n" % @twitter_handle
-						count = 0
-						leaders.each do |handle, votecount|
-							count += 1
-							tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
-						end
-						self.tweet( tweet )
+					tweet = "%s's Top 5 Monthly Influencers:\n\n" % @twitter_handle
+					count = 0
+					leaders.each do |handle, votecount|
+						count += 1
+						tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+					end
+					if count == 0
+						tweet << "No influencers this month ):\n\n"
+						tweet << "Gotta get more votes per poll!!!"
+					end
+					self.tweet( tweet )
 
-						# TODO: Rotate and save the monthly influencer's file for records
+					# TODO: Rotate and save the monthly influencer's file for records
 
-						# Reset the monthly influencers count for the new month
-						@influencers_month = {}
-						self.save_influencers( :month, @influencers_month )
+					# Reset the monthly influencers count for the new month
+					@influencers_month = {}
+					self.save_influencers( :month, @influencers_month )
 
-						# TODO: Have the bot calculate monthly profits and distribute profits to the monthly leaderboard if they have registered a Bitcoin Address
+					# TODO: Have the bot calculate monthly profits and distribute profits to the monthly leaderboard if they have registered a Bitcoin Address
 
-						sleep 60
-					else
+					sleep 60
 				end
 
-				# On the Week
+				# On the Day
 				case
-					when @time.saturday? && $hour == 23 && $minute = 59
+				# End of the Day Leaderboard
+				when $hour == 23 && $minute == 59 # Just before Midnight
+					leaders = self.get_leaderboard( :day, 5 )
+
+					tweet = "%s's Top 5 Daily Influencers:\n\n" % @twitter_handle
+					count = 0
+					leaders.each do |handle, votecount|
+						count += 1
+						tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+					end
+					if count == 0
+						tweet << "No influencers today ):\n\n"
+						tweet << "Gotta get more votes per poll!!!"
+					end
+					self.tweet( tweet )
+
+					# Reset the daily influencers count for the new day and safe it to file
+					@influencers_day = {}
+					self.save_influencers( :day, @influencers_day )
+
+					# End of the Week Leaderboard
+					if @time.saturday?
 						leaders = self.get_leaderboard( :week, 5 )
 				
 						tweet = "%s's Top 5 Weekly Influencers:\n\n" % @twitter_handle
@@ -461,33 +490,19 @@ class TCTBot
 							count += 1
 							tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
 						end
+						if count == 0
+							tweet << "No influencers this week ):\n\n"
+							tweet << "Gotta get more votes per poll!!!"
+						end
 						self.tweet( tweet )
 
 						# Reset the weekly influencers count for the new week
 						@influencers_week = {}
 						self.save_influencers( :week, @influencers_week )
+					end
 
-						sleep 60
-				end
-
-				# On the Day
-				case
-					when $hour == 23 && $minute == 58 # Just before Midnight
-						leaders = self.get_leaderboard( :day, 5 )
-
-						tweet  = "%s's Top 5 Daily Influencers:\n\n" % @twitter_handle
-						count = 0
-						leaders.each do |handle, votecount|
-							count += 1
-							tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
-						end
-						self.tweet( tweet )
-
-						# Reset the daily influencers count for the new day
-						@influencers_day = {}
-						self.save_influencers( :day, @influencers_day )
-
-						sleep 60
+					# Ensure we're past this minue once activity is done
+					sleep 60
 				end
 
 				# On the Minute
@@ -509,10 +524,10 @@ class TCTBot
 						Syslog.info( message ) if VERBOSITY >= 1
 						#TODO: Add last order info to this tweet
 						tweet  = "Poll %d: Should I BUY, SELL, or HODL?\n\n" % @pollid
-						tweet << "Current BTC/USD Spot: $%s\n\n"             % @ticker['price']
+						tweet << "Current %s/%s Spot: $%s\n\n"               % [ @base_currency, @quot_currency, @ticker['price'] ]
 						tweet << "Balances:\n"
-						tweet << "BTC: %s\n"                                 % @btc_balance
-						tweet << "USD: \$%s\n\n"                             % @usd_balance
+						tweet << "%s: %s\n"                                  % [ @base_currency, @base_balance ]
+						tweet << "%s: \$%s\n\n"                              % [ @quot_currency, @quot_balance ]
 						tweet << "Reply with one keyword: BUY, SELL, or HODL. Most recent reply is your vote (so you can change your mind), multiple keywords in one reply ignored"
 						self.tweet( tweet )
 
@@ -548,7 +563,7 @@ class TCTBot
 							query = "to:%s" % @twitter_handle
 							reply_tweets = @twitter.search(query, since_id: @persist[:lasttweet].id, result_type: "recent")
 							#p reply_tweets if VERBOSITY >= 3
-							Syslog.debug( "Got %d replies to user." % reply_tweets.count ) if VERBOSITY >= 1
+							Syslog.debug( "Got %d replies to user." % reply_tweets.count ) if $DEBUG
 							Syslog.warning( "WARNING: Got %d replies to user, possibly more than 100 votes!" % reply_tweets.count ) if reply_tweets.count >= 100
 							# TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.
 
@@ -565,10 +580,10 @@ class TCTBot
 							# Reverse order so that tweets are in chronological order
 							replies = replies.reverse
 
-							Syslog.debug("Got %d replies to poll.", replies.count) if VERBOSITY >= 1
+							Syslog.debug( "Got %d replies to poll." % replies.count ) if $DEBUG
 							if VERBOSITY >= 3 
 								for tweet in replies do
-									Syslog.debug("%s said: \"%s\"", tweet.user.screen_name, tweet.text)
+									Syslog.debug( "%s said: \"%s\"" % [ tweet.user.screen_name, tweet.text ] )
 								end
 							end
 
@@ -616,7 +631,7 @@ class TCTBot
 									tally[:buy]  += 1 if vote == "BUY"
 									tally[:sell] += 1 if vote == "SELL"
 									tally[:hodl] += 1 if vote == "HODL"
-									# Add a vote to the name's influencers score
+									# Add a vote to the name's influencers score or initialize it if it's the first vote from them
 									@influencers_day[name]   ? @influencers_day[name]   += 1 : @influencers_day[name] 	= 1
 									@influencers_week[name]  ? @influencers_week[name]  += 1 : @influencers_week[name] 	= 1
 									@influencers_month[name] ? @influencers_month[name] += 1 : @influencers_month[name] = 1
@@ -674,39 +689,39 @@ class TCTBot
 							when "BUY"
 								Syslog.info("Executing MARKET BUY order via Cryptomnio...") if VERBOSITY >= 1
 
-								# Determine @usd_percentage % of USD
+								# Determine @quot_percentage % of USD
 								# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
 								@buy_percentage = 90 if @buy_percentage == 100 # Need to give the bot a little wiggle room for market changes and trading fees
-								balance = @usd_balance.to_f 
+								balance = @quot_balance.to_f 
 								$amount = (balance * (@buy_percentage / 100.0)).to_f
-								message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @usd_balance, $amount, @buy_percentage ]
+								message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @quot_balance, $amount, @buy_percentage ]
 								Syslog.info( message ) if VERBOSITY >= 1
 
 								# Get current ticker spot price
 								self.update_ticker
-								message = "Current spot price for BTC/USD on %s: \$%s" % [ @exchange, @ticker['price']]
+								message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price'] ]
 								Syslog.info(message) if VERBOSITY >= 1
 				
 								# Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )
 								$volume = ( $amount / @ticker['price'].to_f ).round(8)
-								message = "BUYing %0.8f BTC with $%0.2f USD." % [ $volume, $amount ]
+								message = "BUYing %0.8f %s with $%0.2f %s." % [ $volume, @base_currency, $amount, @quot_currency ]
 								Syslog.info( message ) if VERBOSITY >= 1
 
 								# Sanity check volume to make sure it's not below minimum exchange trade limits
 								if $volume < 0.003
-									message = "Attemtped BUY of %0.8f BTC (%0.2f%%%% of $%0.2f USD) is below Bitstamp's minimum order volume limit (0.003 BTC). Gotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
+									message = "Attemtped BUY of %0.8f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.003 %s). Gotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
 									Syslog.info(message)
 					
-									tweet = "Attempted BUY of %0.8f BTC (%0.2f%% of $%0.2f USD) is below @Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @buy_percentage, @usd_balance ]
+									tweet = "Attempted BUY of %0.8f %s(%0.2f%% of $%0.2f %s) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 									break
 								end
 
 								# Place BID order
-								message = "BUYing %0.8f BTC (%0.2f%%%% of $%0.2f USD) at MARKET" % [ $volume, @buy_percentage, balance ]
+								message = "BUYing %0.8f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $volume, @base_currency, @buy_percentage, balance, @quot_currency ]
 								Syslog.info(message)
-								$order_id = @cryptomnio.create_venue_account_order_market( "buy", $volume, "btc_usd" )
+								$order_id = @cryptomnio.create_venue_account_order_market( "buy", $volume, @market )
 
 								# Get Order Info
 								sleep 15
@@ -717,32 +732,32 @@ class TCTBot
 							when "SELL"
 								Syslog.info("Executing MARKET SELL order via Cryptomnio...")
 
-								# Calculate volume to sell ( @sell_percentage % of BTC balance rounded to 8 decimal places )
-								balance = @btc_balance.to_f
+								# Calculate volume to sell ( @sell_percentage % of @base_currency balance rounded to 8 decimal places )
+								balance = @base_balance.to_f
 								$volume = (balance * (@sell_percentage / 100.0)).round(8)
-								message = "Have $%0.8f BTC to SELL. SELLing $%0.8f (%0.2f%%%%) of it..." % [ @btc_balance, $volume, @sell_percentage ]
+								message = "Have $%0.8f %s to SELL. SELLing %0.8f (%0.2f%%%%) of it..." % [ @base_balance, @base_currency, $volume, @sell_percentage ]
 								Syslog.info( message ) if VERBOSITY >= 1
 								
 								# Get current ticker spot price
 								self.update_ticker
-								message = "Current spot price for BTC/USD on %s: \$%s" % [ @exchange, @ticker['price']]
+								message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price']]
 								Syslog.info(message) if VERBOSITY >= 1
 
 								# Sanity check volume to make sure it's not below minimum exchange trade limits
 								if $volume < 0.003
-									message = "Attemtped SELL of %0.8f BTC (%0.2f%%%%) is below Bitstamp's minimum order volume limit (0.003 BTC).  Gotta HODL!!!" % [ $volume, @sell_percentage ]
+									message = "Attemtped SELL of %0.8f %s (%0.2f%%%%) is below Bitstamp's minimum order volume limit (0.003 %s).  Gotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
 									Syslog.info(message)
 					
-									tweet = "Attempted SELL of %0.8f BTC (%0.2f%%) is below @Bitstamp's minimum order volume limit (0.003 BTC).\n\nGotta HODL!!!" % [ $volume, @sell_percentage ]
+									tweet = "Attempted SELL of %0.8f %s (%0.2f%%) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
 									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 									break
 								end
 
 								# Place ASK order
-								message = "SELLing %0.8f BTC (%0.2f%%%% of %s BTC) at MARKET" % [ $volume, @sell_percentage, balance ] 
+								message = "SELLing %0.8f %s (%0.2f%%%% of %s %s) at MARKET" % [ $volume, @base_currency, @sell_percentage, balance, @base_currency ] 
 								Syslog.info(message)
-								$order_id = @cryptomnio.create_venue_account_order_market( "sell", $volume, "btc_usd" )
+								$order_id = @cryptomnio.create_venue_account_order_market( "sell", $volume, @market )
 
 								# Get Order Info
 								sleep 15
@@ -785,19 +800,19 @@ class TCTBot
 							self.update_ticker
 
 							# TODO: Get USD value of trade from trade result.  For now, we calculate it ourselves:
-							usd_value = ( $order_info['quantity'].to_f * @ticker['price'].to_f ).round(2)
+							quot_value = ( $order_info['quantity'].to_f * @ticker['price'].to_f ).round(2)
 
 							# Post trade results
 							Syslog.info("Tweeting trade results...")
 							case $decision
-								when "BUY"
+							when "BUY"
 								tweet  = "Trade on @Bitstamp Complete:\n\n"
-								tweet << "BUY %0.2f%% of USD ($%0.2f USD): %s BTC\n"  % [ @buy_percentage, usd_value, $order_info["quantity"] ]
+								tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, quot_value, @quot_currency, $order_info['quantity'], @base_currency ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
 							when "SELL"
 								tweet  = "Trade on @Bitstamp Complete:\n\n"
-								tweet << "SELL %0.2f%% of BTC: $%0.8f BTC (%s USD)\n" % [ @sell_percentage, $order_info["quantity"], usd_value ]
+								tweet << "SELL %0.2f%% of %s: $%0.8f %s (%s %s)\n"    % [ @sell_percentage, @base_currency, $order_info['quantity'], @base_currency, quot_value, @quot_currency ]
 								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
 							end
@@ -812,50 +827,50 @@ class TCTBot
 						self.update_ticker
 
 						# Save old balances
-						@btc_balance_previous = @btc_balance
-						@usd_balance_previous = @usd_balance
+						@base_balance_previous = @base_balance
+						@quot_balance_previous = @quot_balance
 							
 						# Refresh Account Balances
 						self.update_balances
-						puts "BTC Balance: %s" % @btc_balance if VERBOSITY >= 2
-						puts "USD Balance: %s" % @usd_balance if VERBOSITY >= 2
+						puts "%s Balance: %s" % [ @base_currency, @base_balance ] if VERBOSITY >= 2
+						puts "%s Balance: %s" % [ @quot_currency, @quot_balance ] if VERBOSITY >= 2
 
 						# Calculate change in balances due to most recent trade
-						$btc_diff_value   = @btc_balance - @btc_balance_previous
-						$usd_diff_value   = @usd_balance - @usd_balance_previous
-						if $btc_diff_value == 0 && @btc_balance_previous == 0
+						$base_diff_value   = @base_balance - @base_balance_previous
+						$quot_diff_value   = @quot_balance - @quot_balance_previous
+						if $base_diff_value == 0 && @base_balance_previous == 0
 							# Don't divide by 0
-							$btc_diff_percent = 0
+							$base_diff_percent = 0
 						else
-							$btc_diff_percent = ($btc_diff_value / @btc_balance_previous) * 100 
+							$base_diff_percent = ($base_diff_value / @base_balance_previous) * 100 
 						end
-						if $usd_diff_percent == 0 && @usd_balance_previous == 0
+						if $quot_diff_percent == 0 && @quot_balance_previous == 0
 							# Don't divide by 0
-							$usd_diff_percent = 0
+							$quot_diff_percent = 0
 						else
-							$usd_diff_percent = ($usd_diff_value / @usd_balance_previous) * 100 
+							$quot_diff_percent = ($quot_diff_value / @quot_balance_previous) * 100 
 						end
 
-						# Calculate total account value in both BTC and USD
-						$btc_total = @btc_balance + ( @usd_balance / @ticker['price'].to_f )
-						puts "BTC Account Value: %s" % @btc_total if VERBOSITY >= 2
-						$usd_total = @usd_balance + ( @btc_balance * @ticker['price'].to_f )
-						puts "USD Account Value: %s" % @usd_total if VERBOSITY >= 2
+						# Calculate total account value in both @base_currency and @quot_currency
+						$base_total = @base_balance + ( @quot_balance / @ticker['price'].to_f )
+						puts "%s Account Value: %s" % [ @base_currency, @base_total ] if VERBOSITY >= 2
+						$quot_total = @quot_balance + ( @base_balance * @ticker['price'].to_f )
+						puts "%s Account Value: %s" % [ @quot_currency, @quot_total ] if VERBOSITY >= 2
 
 						# Calculate change in total account value
-						$btc_start_diff_value   = $btc_total - ( @starting_base + ( @starting_quot / @ticker['price'].to_f ) )
-						$btc_start_diff_percent = ($btc_start_diff_value / $btc_total) * 100
-						$usd_start_diff_value   = $usd_total - ( @starting_quot + ( @starting_base * @ticker['price'].to_f ) )
-						$usd_start_diff_percent = ($usd_start_diff_value / $usd_total) * 100
+						$base_start_diff_value   = $base_total - ( @starting_base + ( @starting_quot / @ticker['price'].to_f ) )
+						$base_start_diff_percent = ($base_start_diff_value / $base_total) * 100
+						$quot_start_diff_value   = $quot_total - ( @starting_quot + ( @starting_base * @ticker['price'].to_f ) )
+						$quot_start_diff_percent = ($quot_start_diff_value / $quot_total) * 100
 
 						# Post Balances Tweet
 						tweet  = "Current Account Balances:\n\n"
-						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @btc_balance, $btc_diff_value, $btc_diff_percent ]
-						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n" % [ @usd_balance, $usd_diff_value, $usd_diff_percent ]
+						tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, @base_balance, $base_diff_value, $base_diff_percent ]
+						tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, @quot_balance, $quot_diff_value, $quot_diff_percent ]
 						tweet << "Total Account Value:\n\n"
-						tweet << "BTC: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ $btc_total, $btc_start_diff_value, $btc_start_diff_percent ]
-						tweet << "USD: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"  % [ $usd_total, $usd_start_diff_value, $usd_start_diff_percent ]
-						tweet << "Current BTC/USD Spot: $%s"            % @ticker['price']
+						tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, $base_start_diff_value, $base_start_diff_percent ]
+						tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, $quot_start_diff_value, $quot_start_diff_percent ]
+						tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
 						self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 						# Wait at least one minute since last operation
