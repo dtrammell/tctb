@@ -432,7 +432,8 @@ class TCTBot
 
 				# On the Month
 				case
-				when $month != @persist[:lastmonth] # Month Change!
+				#when $month != @persist[:lastmonth] # Month Change!
+				when $day == 1 && $hour == 15 && $minute == 59 
 					leaders = self.get_leaderboard( :month, 5 )
 
 					tweet = "%s's Top 5 Monthly Influencers:\n\n" % @twitter_handle
@@ -461,24 +462,24 @@ class TCTBot
 				# On the Day
 				case
 				# End of the Day Leaderboard
-				when $hour == 23 && $minute == 59 # Just before Midnight
-					leaders = self.get_leaderboard( :day, 5 )
-
-					tweet = "%s's Top 5 Daily Influencers:\n\n" % @twitter_handle
-					count = 0
-					leaders.each do |handle, votecount|
-						count += 1
-						tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
-					end
-					if count == 0
-						tweet << "No influencers today ):\n\n"
-						tweet << "Gotta get more votes per poll!!!"
-					end
-					self.tweet( tweet )
-
-					# Reset the daily influencers count for the new day and safe it to file
-					@influencers_day = {}
-					self.save_influencers( :day, @influencers_day )
+				when $hour == 15 && $minute == 59 # Just before Midnight
+#					leaders = self.get_leaderboard( :day, 5 )
+#
+#					tweet = "%s's Top 5 Daily Influencers:\n\n" % @twitter_handle
+#					count = 0
+#					leaders.each do |handle, votecount|
+#						count += 1
+#						tweet << "%d: @%s with %d votes!\n" % [ count, handle, votecount ] 
+#					end
+#					if count == 0
+#						tweet << "No influencers today ):\n\n"
+#						tweet << "Gotta get more votes per poll!!!"
+#					end
+#					self.tweet( tweet )
+#
+#					# Reset the daily influencers count for the new day and safe it to file
+#					@influencers_day = {}
+#					self.save_influencers( :day, @influencers_day )
 
 					# End of the Week Leaderboard
 					if @time.saturday?
@@ -503,402 +504,407 @@ class TCTBot
 
 					# Ensure we're past this minue once activity is done
 					sleep 60
-				end
 
-				# On the Minute
-				case $minute
+				when $hour == 16 && $minute == 00 # 16:00 Post a new Poll
+					# Refresh Account Balances
+					self.update_balances
 
-					when 00 # Minute 00: Post a new Poll
-						# Refresh Account Balances
-						self.update_balances
+					# Get current ticker spot price
+					self.update_ticker
+				
+					# Generate a new Poll ID
+					@pollid = "%d%02d%02d" % [ @time.year, @time.month, @time.day ]
+					@pollid = @pollid.to_i
+
+					# Post the new poll
+					message = "Posting a new poll! (ID: %d)" % @pollid
+					Syslog.info( message ) if VERBOSITY >= 1
+					#TODO: Add last order info to this tweet
+					tweet  = "Poll %d: Should I BUY, SELL, or HODL?\n\n" % @pollid
+					tweet << "Current %s/%s Spot: $%s\n\n"               % [ @base_currency, @quot_currency, @ticker['price'] ]
+					tweet << "Balances:\n"
+					tweet << "%s: %s\n"                                  % [ @base_currency, @base_balance ]
+					tweet << "%s: \$%s\n\n"                              % [ @quot_currency, @quot_balance ]
+					tweet << "Reply with one keyword: BUY, SELL, or HODL. Most recent reply is your vote (so you can change your mind), multiple keywords in one reply ignored"
+					self.tweet( tweet )
+
+					# Finished with this minute's operation... sleep to ensure this doesn't get called again this hour
+					sleep 60
+
+				when $hour == 15 && $minute == 55 # 13:55 Close the Poll
+					# Retrieve most recent tweet, *should* be the last poll posted
+					# TODO: Find and retrieve the most recent poll tweet instead of assuming the lasttweet is the most recent poll
+					if ! @persist[:lasttweet]
+						# Get the most recent tweet from Twitter
+						$tweets = @twitter.user_timeline(@twitter_handle, count: 1)
+						@persist[:lasttweet] = $tweets[0]
+						self.save_state
+
+						# Output
+						Syslog.info( "Retrieved most recent %s tweet (poll): \"%s...\"", @twitter_handle, @persist[:lasttweet].text[0,26] ) if VERBOSITY >= 1
+					end
+
+					# Extract the Poll ID from the tweet
+					@pollid = @persist[:lasttweet].text[/\b(?<!\.)\d+(?!\.)\b/, 0]
+					if ! @pollid
+						# Couldn't get the Poll ID, sleep past this minute and break
+						Syslog.err( "Unable to retrieve Poll ID from most recent tweet! %s", @pollid.inspect )
+						sleep 60
+						break
+					end
+					@pollid = @pollid.to_i
+
+					Syslog.info( "Closing Poll %s", @pollid ) if VERBOSITY >= 1
+					if @persist[:lasttweet]
+						# Get all replies to the account after our poll tweet
+						query = "to:%s" % @twitter_handle
+						reply_tweets = @twitter.search(query, since_id: @persist[:lasttweet].id, result_type: "recent")
+						#p reply_tweets if VERBOSITY >= 3
+						Syslog.debug( "Got %d replies to user." % reply_tweets.count ) if $DEBUG
+						Syslog.warning( "WARNING: Got %d replies to user, possibly more than 100 votes!" % reply_tweets.count ) if reply_tweets.count >= 100
+						# TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.
+
+						# Find subset of replies that replied directly to our poll tweet
+						replies = []
+						index = 0
+						for tweet in reply_tweets do
+							if tweet.in_reply_to_status_id == @persist[:lasttweet].id
+								replies[index] = tweet
+								index += 1
+							end
+						end
+
+						# Reverse order so that tweets are in chronological order
+						replies = replies.reverse
+
+						Syslog.debug( "Got %d replies to poll." % replies.count ) if $DEBUG
+						if VERBOSITY >= 3 
+							for tweet in replies do
+								Syslog.debug( "%s said: \"%s\"" % [ tweet.user.screen_name, tweet.text ] )
+							end
+						end
+
+						# Count the votes from replies
+						votes = {}
+						for tweet in replies do
+							# Parse the tweet text for the vote keywords
+							tweet.text =~ /buy/i       ? buy  = true  : buy  = false 
+							tweet.text =~ /sell/i      ? sell = true  : sell = false 
+							tweet.text =~ /hodl|hold/i ? hodl = true  : hodl = false 
+							# Ensure that the tweet only contains one keyword
+							if [buy, sell, hodl].one?
+								# Add the voted keyword to the votes hash. Most recent vote per user will be counted.
+								votes[tweet.user.screen_name] = "BUY"  if buy  == true
+								votes[tweet.user.screen_name] = "SELL" if sell == true
+								votes[tweet.user.screen_name] = "HODL" if hodl == true
+							end
+						end              
+						Syslog.info( "Got %d votes in poll.", votes.size ) if VERBOSITY >= 1
+						if VERBOSITY >= 2
+							votes.each do |name, vote|
+								Syslog.debug( "%s voted: \"%s\"", name, vote )
+							end
+						end
+
+						# Check if we have our minimum threshold of votes. Default to HODL if not
+						if votes.count < @votes_min
+							Syslog.info( "Only received %d votes (minimum %d), HODL!"    % [ votes.count, @votes_min ] ) if VERBOSITY >= 1
+							tweet  = "Voting closed for poll %d.\n\n"                    % @pollid
+							tweet << "Not enough votes to make a decision.  HODL!!!\n\n"
+							tweet << "(Need a minimum of %d votes, got %d votes... "             % [ @votes_min, votes.count ]
+							tweet << "Maybe you should retweet my upcoming poll tweet?)"
+							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id ) 
+							$decision = "HODL"
+						else
+							# We have enough votes!  Make some trades...
+							Syslog.info( "Enough votes received, tallying the votes to make a decision!" )
+
+							# Tally the votes
+							tally = {}
+							tally[:buy]  = 0
+							tally[:sell] = 0
+							tally[:hodl] = 0
+							votes.each do |name, vote|
+								tally[:buy]  += 1 if vote == "BUY"
+								tally[:sell] += 1 if vote == "SELL"
+								tally[:hodl] += 1 if vote == "HODL"
+								# Add a vote to the name's influencers score or initialize it if it's the first vote from them
+								@influencers_day[name]   ? @influencers_day[name]   += 1 : @influencers_day[name] 	= 1
+								@influencers_week[name]  ? @influencers_week[name]  += 1 : @influencers_week[name] 	= 1
+								@influencers_month[name] ? @influencers_month[name] += 1 : @influencers_month[name] = 1
+								@influencers_all[name]   ? @influencers_all[name]   += 1 : @influencers_all[name] 	= 1
+							end
+
+							# Save the updated influencers data
+							save_influencers( :day,   @influencers_day   )
+							save_influencers( :week,  @influencers_week  )
+							save_influencers( :month, @influencers_month )
+							save_influencers( :all,   @influencers_all   )
+
+							# Calculate relative percentages of each position
+							@buy_percentage  = (tally[:buy].to_f  / votes.count) * 100 
+							@sell_percentage = (tally[:sell].to_f / votes.count) * 100
+							@hodl_percentage = (tally[:hodl].to_f / votes.count) * 100
+							if VERBOSITY >= 2
+								puts "BUY percentage:  %0.2f%%" % @buy_percentage
+								puts "SELL percentage: %0.2f%%" % @sell_percentage
+								puts "HODL percentage: %0.2f%%" % @hodl_percentage
+							end
+
+							# Find the largest number in the tally hash and return the associated key(s)
+							winner = tally.reduce({}){|h,(k,v)| (h[v] ||= []) << k;h}.max
+							# There can be only one:
+							$decision = "HODL" #default
+							if winner[1].count > 1
+								# Tie!  HODL...
+								message = "Result of Poll %d was a tie! I'm gonna %s. Vote Tally: [ BUY:  %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
+								Syslog.info(message)
+
+								tweet = "Result of Poll %d was a tie!\n\nI'm gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
+								self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
+							else
+								# Winner!
+								$decision = "BUY"  if winner[1][0] == :buy
+								$decision = "SELL" if winner[1][0] == :sell
+								$decision = "HODL" if winner[1][0] == :hodl
+
+								# Post poll results
+								message = "The results for Poll %d are in! %s is the winner! Vote Tally: [ BUY: %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
+								puts message if VERBOSITY >= 2
+								Syslog.info( message.to_s )
+
+								tweet = "The results for Poll %d are in!\n\n%s is the winner!\n\nVote Tally:\nBUY: %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
+								self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
+								self.save_state
+							end
+
+						end # if votes.count < 10
+					end # if @persist[:lasttweet]
+
+					# Execute desired trade via Cryptomnio
+					case $decision
+					when "BUY"
+						Syslog.info("Executing MARKET BUY order via Cryptomnio...") if VERBOSITY >= 1
+
+						# Determine @quot_percentage % of USD
+						# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
+						@buy_percentage = 90 if @buy_percentage == 100 # Need to give the bot a little wiggle room for market changes and trading fees
+						balance = @quot_balance.to_f 
+						$amount = (balance * (@buy_percentage / 100.0)).to_f
+						message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @quot_balance, $amount, @buy_percentage ]
+						Syslog.info( message ) if VERBOSITY >= 1
 
 						# Get current ticker spot price
 						self.update_ticker
+						message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price'] ]
+						Syslog.info(message) if VERBOSITY >= 1
 				
-						# Generate a new Poll ID
-						@pollid = "%d%02d%02d%02d" % [ @time.year, @time.month, @time.day, @time.hour ]
-						@pollid = @pollid.to_i
-
-						# Post the new poll
-						message = "Posting a new poll! (ID: %d)" % @pollid
+						# Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )
+						$volume = ( $amount / @ticker['price'].to_f ).round(8)
+						message = "BUYing %0.8f %s with $%0.2f %s." % [ $volume, @base_currency, $amount, @quot_currency ]
 						Syslog.info( message ) if VERBOSITY >= 1
-						#TODO: Add last order info to this tweet
-						tweet  = "Poll %d: Should I BUY, SELL, or HODL?\n\n" % @pollid
-						tweet << "Current %s/%s Spot: $%s\n\n"               % [ @base_currency, @quot_currency, @ticker['price'] ]
-						tweet << "Balances:\n"
-						tweet << "%s: %s\n"                                  % [ @base_currency, @base_balance ]
-						tweet << "%s: \$%s\n\n"                              % [ @quot_currency, @quot_balance ]
-						tweet << "Reply with one keyword: BUY, SELL, or HODL. Most recent reply is your vote (so you can change your mind), multiple keywords in one reply ignored"
-						self.tweet( tweet )
 
-						# Finished with this minute's operation... sleep to ensure this doesn't get called again this hour
-						sleep 60
-
-					when 55 # Minute 55: Close the Poll
-						# Retrieve most recent tweet, *should* be the last poll posted
-						# TODO: Find and retrieve the most recent poll tweet instead of assuming the lasttweet is the most recent poll
-						if ! @persist[:lasttweet]
-							# Get the most recent tweet from Twitter
-							$tweets = @twitter.user_timeline(@twitter_handle, count: 1)
-							@persist[:lasttweet] = $tweets[0]
-							self.save_state
-
-							# Output
-							Syslog.info( "Retrieved most recent %s tweet (poll): \"%s...\"", @twitter_handle, @persist[:lasttweet].text[0,26] ) if VERBOSITY >= 1
-						end
-
-						# Extract the Poll ID from the tweet
-						@pollid = @persist[:lasttweet].text[/\b(?<!\.)\d+(?!\.)\b/, 0]
-						if ! @pollid
-							# Couldn't get the Poll ID, sleep past this minute and break
-							Syslog.err( "Unable to retrieve Poll ID from most recent tweet! %s", @pollid.inspect )
-							sleep 60
-							break
-						end
-						@pollid = @pollid.to_i
-
-						Syslog.info( "Closing Poll %s", @pollid ) if VERBOSITY >= 1
-						if @persist[:lasttweet]
-							# Get all replies to the account after our poll tweet
-							query = "to:%s" % @twitter_handle
-							reply_tweets = @twitter.search(query, since_id: @persist[:lasttweet].id, result_type: "recent")
-							#p reply_tweets if VERBOSITY >= 3
-							Syslog.debug( "Got %d replies to user." % reply_tweets.count ) if $DEBUG
-							Syslog.warning( "WARNING: Got %d replies to user, possibly more than 100 votes!" % reply_tweets.count ) if reply_tweets.count >= 100
-							# TODO: Twitter only returns max 100 responses per query; loop until all replies have been collected.
-
-							# Find subset of replies that replied directly to our poll tweet
-							replies = []
-							index = 0
-							for tweet in reply_tweets do
-								if tweet.in_reply_to_status_id == @persist[:lasttweet].id
-									replies[index] = tweet
-									index += 1
-								end
-							end
-
-							# Reverse order so that tweets are in chronological order
-							replies = replies.reverse
-
-							Syslog.debug( "Got %d replies to poll." % replies.count ) if $DEBUG
-							if VERBOSITY >= 3 
-								for tweet in replies do
-									Syslog.debug( "%s said: \"%s\"" % [ tweet.user.screen_name, tweet.text ] )
-								end
-							end
-
-							# Count the votes from replies
-							votes = {}
-							for tweet in replies do
-								# Parse the tweet text for the vote keywords
-								tweet.text =~ /buy/i       ? buy  = true  : buy  = false 
-								tweet.text =~ /sell/i      ? sell = true  : sell = false 
-								tweet.text =~ /hodl|hold/i ? hodl = true  : hodl = false 
-								# Ensure that the tweet only contains one keyword
-								if [buy, sell, hodl].one?
-									# Add the voted keyword to the votes hash. Most recent vote per user will be counted.
-									votes[tweet.user.screen_name] = "BUY"  if buy  == true
-									votes[tweet.user.screen_name] = "SELL" if sell == true
-									votes[tweet.user.screen_name] = "HODL" if hodl == true
-								end
-							end              
-							Syslog.info( "Got %d votes in poll.", votes.size ) if VERBOSITY >= 1
-							if VERBOSITY >= 2
-								votes.each do |name, vote|
-									Syslog.debug( "%s voted: \"%s\"", name, vote )
-								end
-							end
-
-							# Check if we have our minimum threshold of votes. Default to HODL if not
-							if votes.count < @votes_min
-								Syslog.info( "Only received %d votes (minimum %d), HODL!"    % [ votes.count, @votes_min ] ) if VERBOSITY >= 1
-								tweet  = "Voting closed for poll %d.\n\n"                    % @pollid
-								tweet << "Not enough votes to make a decision.  HODL!!!\n\n"
-								tweet << "(Need a minimum of %d votes, got %d votes... "             % [ @votes_min, votes.count ]
-								tweet << "Maybe you should retweet my upcoming poll tweet?)"
-								self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id ) 
-								$decision = "HODL"
-							else
-								# We have enough votes!  Make some trades...
-								Syslog.info( "Enough votes received, tallying the votes to make a decision!" )
-
-								# Tally the votes
-								tally = {}
-								tally[:buy]  = 0
-								tally[:sell] = 0
-								tally[:hodl] = 0
-								votes.each do |name, vote|
-									tally[:buy]  += 1 if vote == "BUY"
-									tally[:sell] += 1 if vote == "SELL"
-									tally[:hodl] += 1 if vote == "HODL"
-									# Add a vote to the name's influencers score or initialize it if it's the first vote from them
-									@influencers_day[name]   ? @influencers_day[name]   += 1 : @influencers_day[name] 	= 1
-									@influencers_week[name]  ? @influencers_week[name]  += 1 : @influencers_week[name] 	= 1
-									@influencers_month[name] ? @influencers_month[name] += 1 : @influencers_month[name] = 1
-									@influencers_all[name]   ? @influencers_all[name]   += 1 : @influencers_all[name] 	= 1
-								end
-
-								# Save the updated influencers data
-								save_influencers( :day,   @influencers_day   )
-								save_influencers( :week,  @influencers_week  )
-								save_influencers( :month, @influencers_month )
-								save_influencers( :all,   @influencers_all   )
-
-								# Calculate relative percentages of each position
-								@buy_percentage  = (tally[:buy].to_f  / votes.count) * 100 
-								@sell_percentage = (tally[:sell].to_f / votes.count) * 100
-								@hodl_percentage = (tally[:hodl].to_f / votes.count) * 100
-								if VERBOSITY >= 2
-									puts "BUY percentage:  %0.2f%%" % @buy_percentage
-									puts "SELL percentage: %0.2f%%" % @sell_percentage
-									puts "HODL percentage: %0.2f%%" % @hodl_percentage
-								end
-
-								# Find the largest number in the tally hash and return the associated key(s)
-								winner = tally.reduce({}){|h,(k,v)| (h[v] ||= []) << k;h}.max
-								# There can be only one:
-								$decision = "HODL" #default
-								if winner[1].count > 1
-									# Tie!  HODL...
-									message = "Result of Poll %d was a tie! I'm gonna %s. Vote Tally: [ BUY:  %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
-									Syslog.info(message)
-
-									tweet = "Result of Poll %d was a tie!\n\nI'm gonna %s.\n\nVote Tally:\nBUY:  %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
-									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
-								else
-									# Winner!
-									$decision = "BUY"  if winner[1][0] == :buy
-									$decision = "SELL" if winner[1][0] == :sell
-									$decision = "HODL" if winner[1][0] == :hodl
-
-									# Post poll results
-									message = "The results for Poll %d are in! %s is the winner! Vote Tally: [ BUY: %d (%0.2f%%%%)| SELL: %d (%0.2f%%%%)| HODL: %d (%0.2f%%%%)]" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage] # strings going to Syslog need double-escapes for format strings
-									puts message if VERBOSITY >= 2
-									Syslog.info( message.to_s )
-
-									tweet = "The results for Poll %d are in!\n\n%s is the winner!\n\nVote Tally:\nBUY: %d (%0.2f%%)\nSELL: %d (%0.2f%%)\nHODL: %d (%0.2f%%)" % [@pollid, $decision, tally[:buy], @buy_percentage, tally[:sell], @sell_percentage, tally[:hodl], @hodl_percentage]
-									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
-									self.save_state
-								end
-
-							end # if votes.count < 10
-						end # if @persist[:lasttweet]
-
-						# Execute desired trade via Cryptomnio
-						case $decision
-							when "BUY"
-								Syslog.info("Executing MARKET BUY order via Cryptomnio...") if VERBOSITY >= 1
-
-								# Determine @quot_percentage % of USD
-								# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
-								@buy_percentage = 90 if @buy_percentage == 100 # Need to give the bot a little wiggle room for market changes and trading fees
-								balance = @quot_balance.to_f 
-								$amount = (balance * (@buy_percentage / 100.0)).to_f
-								message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @quot_balance, $amount, @buy_percentage ]
-								Syslog.info( message ) if VERBOSITY >= 1
-
-								# Get current ticker spot price
-								self.update_ticker
-								message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price'] ]
-								Syslog.info(message) if VERBOSITY >= 1
-				
-								# Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )
-								$volume = ( $amount / @ticker['price'].to_f ).round(8)
-								message = "BUYing %0.8f %s with $%0.2f %s." % [ $volume, @base_currency, $amount, @quot_currency ]
-								Syslog.info( message ) if VERBOSITY >= 1
-
-								# Sanity check volume to make sure it's not below minimum exchange trade limits
-								if $volume < 0.003
-									message = "Attemtped BUY of %0.8f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.003 %s). Gotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
-									Syslog.info(message)
-					
-									tweet = "Attempted BUY of %0.8f %s(%0.2f%% of $%0.2f %s) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
-									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
-
-									break
-								end
-
-								# Place BID order
-								message = "BUYing %0.8f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $volume, @base_currency, @buy_percentage, balance, @quot_currency ]
-								Syslog.info(message)
-								$order_id = @cryptomnio.create_venue_account_order_market( "buy", $volume, @market )
-
-								# Get Order Info
-								sleep 15
-								$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
-								message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
-								Syslog.info(message)
-
-							when "SELL"
-								Syslog.info("Executing MARKET SELL order via Cryptomnio...")
-
-								# Calculate volume to sell ( @sell_percentage % of @base_currency balance rounded to 8 decimal places )
-								balance = @base_balance.to_f
-								$volume = (balance * (@sell_percentage / 100.0)).round(8)
-								message = "Have $%0.8f %s to SELL. SELLing %0.8f (%0.2f%%%%) of it..." % [ @base_balance, @base_currency, $volume, @sell_percentage ]
-								Syslog.info( message ) if VERBOSITY >= 1
-								
-								# Get current ticker spot price
-								self.update_ticker
-								message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price']]
-								Syslog.info(message) if VERBOSITY >= 1
-
-								# Sanity check volume to make sure it's not below minimum exchange trade limits
-								if $volume < 0.003
-									message = "Attemtped SELL of %0.8f %s (%0.2f%%%%) is below Bitstamp's minimum order volume limit (0.003 %s).  Gotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
-									Syslog.info(message)
-					
-									tweet = "Attempted SELL of %0.8f %s (%0.2f%%) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
-									self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
-
-									break
-								end
-
-								# Place ASK order
-								message = "SELLing %0.8f %s (%0.2f%%%% of %s %s) at MARKET" % [ $volume, @base_currency, @sell_percentage, balance, @base_currency ] 
-								Syslog.info(message)
-								$order_id = @cryptomnio.create_venue_account_order_market( "sell", $volume, @market )
-
-								# Get Order Info
-								sleep 15
-								$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
-								message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
-								Syslog.info(message)
-
-							else
-								# HODL
-								$order_id = nil
-						end # case $decision
-
-						# TODO: Keep track of last 5 trades or so for a status tweet
-
-						# Perform trade follow-up tasks if a trade was executed
-						if $order_id
-							message = "Checking Cryptomnio order %s" % $order_id
-							Syslog.info(message) if VERBOSITY >= 2
-
-							# Wait until order clears or is otherwise closed
-							while ! $order_info['venueStatus'] || $order_info['venueStatus'].downcase != 'filled' do
-								if $order_info['venueStatus'] && $order_info['venueStatus'].downcase == 'cancelled'
-									message = "ERROR: Order %s cancelled by exchange!" % $order_id
-									Syslog.err( message )
-									raise message
-									break
-								end
-								if $order_info['cryptomnioStatus'] == 'rejected'
-									message = "ERROR: Order %s rejected by Cryptomnio!" % $order_id
-									Syslog.err( message )
-									raise message
-									break
-								end
-								Syslog.info( "Waiting for order %s to clear..." % $order_id )
-								sleep 3
-								$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
-							end
-
-							# Update ticker
-							self.update_ticker
-
-							# TODO: Get USD value of trade from trade result.  For now, we calculate it ourselves:
-							quot_value = ( $order_info['quantity'].to_f * @ticker['price'].to_f ).round(2)
-
-							# Post trade results
-							Syslog.info("Tweeting trade results...")
-							case $decision
-							when "BUY"
-								tweet  = "Trade on @Bitstamp Complete:\n\n"
-								tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, quot_value, @quot_currency, $order_info['quantity'], @base_currency ]
-								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
-								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
-							when "SELL"
-								tweet  = "Trade on @Bitstamp Complete:\n\n"
-								tweet << "SELL %0.2f%% of %s: $%0.8f %s (%s %s)\n"    % [ @sell_percentage, @base_currency, $order_info['quantity'], @base_currency, quot_value, @quot_currency ]
-								tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
-								tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
-							end
+						# Sanity check volume to make sure it's not below minimum exchange trade limits
+						if $volume < 0.003
+							message = "Attemtped BUY of %0.8f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.003 %s). Gotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
+							Syslog.info(message)
+			
+							tweet = "Attempted BUY of %0.8f %s(%0.2f%% of $%0.2f %s) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
 							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
-							# Sleep for a few seconds so balances can update via the exchange
-							sleep 15
+							break
+						end
 
-						end # if $order_id
+						# Place BID order
+						message = "BUYing %0.8f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $volume, @base_currency, @buy_percentage, balance, @quot_currency ]
+						Syslog.info(message)
+						$order_id = @cryptomnio.create_venue_account_order_market( "buy", $volume, @market )
 
-						# Update ticker
+						# Get Order Info
+						sleep 15
+						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
+						message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
+						Syslog.info(message)
+
+					when "SELL"
+						Syslog.info("Executing MARKET SELL order via Cryptomnio...")
+
+						# Calculate volume to sell ( @sell_percentage % of @base_currency balance rounded to 8 decimal places )
+						balance = @base_balance.to_f
+						$volume = (balance * (@sell_percentage / 100.0)).round(8)
+						message = "Have $%0.8f %s to SELL. SELLing %0.8f (%0.2f%%%%) of it..." % [ @base_balance, @base_currency, $volume, @sell_percentage ]
+						Syslog.info( message ) if VERBOSITY >= 1
+								
+						# Get current ticker spot price
 						self.update_ticker
+						message = "Current spot price for %s/%s on %s: \$%s" % [ @base_currency, @quot_currency, @exchange, @ticker['price']]
+						Syslog.info(message) if VERBOSITY >= 1
 
-						# Save old balances
-						@base_balance_previous = @base_balance
-						@quot_balance_previous = @quot_balance
-							
-						# Refresh Account Balances
-						self.update_balances
-						puts "%s Balance: %s" % [ @base_currency, @base_balance ] if VERBOSITY >= 2
-						puts "%s Balance: %s" % [ @quot_currency, @quot_balance ] if VERBOSITY >= 2
+						# Sanity check volume to make sure it's not below minimum exchange trade limits
+						if $volume < 0.003
+							message = "Attemtped SELL of %0.8f %s (%0.2f%%%%) is below Bitstamp's minimum order volume limit (0.003 %s).  Gotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
+							Syslog.info(message)
+					
+							tweet = "Attempted SELL of %0.8f %s (%0.2f%%) is below @Bitstamp's minimum order volume limit (0.003 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @sell_percentage, @base_currency ]
+							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
-						# Calculate change in balances due to most recent trade
-						$base_diff_value   = @base_balance - @base_balance_previous
-						$quot_diff_value   = @quot_balance - @quot_balance_previous
-						if $base_diff_value == 0 && @base_balance_previous == 0
-							# Don't divide by 0
-							$base_diff_percent = 0
-						else
-							$base_diff_percent = ($base_diff_value / @base_balance_previous) * 100 
-						end
-						if $quot_diff_percent == 0 && @quot_balance_previous == 0
-							# Don't divide by 0
-							$quot_diff_percent = 0
-						else
-							$quot_diff_percent = ($quot_diff_value / @quot_balance_previous) * 100 
+							break
 						end
 
-						# Calculate total account value in both @base_currency and @quot_currency
-						$base_total = @base_balance + ( @quot_balance / @ticker['price'].to_f )
-						puts "%s Account Value: %s" % [ @base_currency, @base_total ] if VERBOSITY >= 2
-						$quot_total = @quot_balance + ( @base_balance * @ticker['price'].to_f )
-						puts "%s Account Value: %s" % [ @quot_currency, @quot_total ] if VERBOSITY >= 2
+						# Place ASK order
+						message = "SELLing %0.8f %s (%0.2f%%%% of %s %s) at MARKET" % [ $volume, @base_currency, @sell_percentage, balance, @base_currency ] 
+						Syslog.info(message)
+						$order_id = @cryptomnio.create_venue_account_order_market( "sell", $volume, @market )
 
-						# Calculate change in total account value
-						$base_start_diff_value   = $base_total - ( @starting_base + ( @starting_quot / @ticker['price'].to_f ) )
-						$base_start_diff_percent = ($base_start_diff_value / $base_total) * 100
-						$quot_start_diff_value   = $quot_total - ( @starting_quot + ( @starting_base * @ticker['price'].to_f ) )
-						$quot_start_diff_percent = ($quot_start_diff_value / $quot_total) * 100
+						# Get Order Info
+						sleep 15
+						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
+						message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
+						Syslog.info(message)
 
-						# Post Balances Tweet
-						tweet  = "Current Account Balances:\n\n"
-						tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, @base_balance, $base_diff_value, $base_diff_percent ]
-						tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, @quot_balance, $quot_diff_value, $quot_diff_percent ]
-						tweet << "Total Account Value:\n\n"
-						tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, $base_start_diff_value, $base_start_diff_percent ]
-						tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, $quot_start_diff_value, $quot_start_diff_percent ]
-						tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
-						self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
-
-						# Wait at least one minute since last operation
-						sleep 60 if ! SPEEDMODE
 					else
-						if @persist[:lastmin] != $minute
-							@persist[:dots] = ""
-						else
-							@persist[:dots] << "."
-						end 
-						self.save_state
+						# HODL
+						$order_id = nil
+				end # case $decision
 
-						if VERBOSITY >= 2
-							printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", $minute, @persist[:dots])
-							STDOUT.flush
-							sleep 0.05
+				# TODO: Keep track of last 5 trades or so for a status tweet
+
+				# Perform trade follow-up tasks if a trade was executed
+				if $order_id
+					message = "Checking Cryptomnio order %s" % $order_id
+					Syslog.info(message) if VERBOSITY >= 2
+
+					# Wait until order clears or is otherwise closed
+					while ! $order_info['venueStatus'] || $order_info['cryptomnioStatus'] == 'open' do
+#					while ! $order_info['venueStatus'] || $order_info['venueStatus'].downcase != 'filled' do
+						if $order_info['venueStatus']
+							case $order_info['venueStatus'].downcase
+							when 'cancelled'
+								message = "ERROR: Order %s cancelled by exchange!" % $order_id
+								Syslog.err( message )
+								raise message
+								break
+							when 'finished'
+								message = "ERROR: Order %s finished by exchange!" % $order_id
+								Syslog.err( message )
+								raise message
+								break
+							end
 						end
+						if $order_info['cryptomnioStatus'] == 'rejected'
+							message = "ERROR: Order %s rejected by Cryptomnio!" % $order_id
+							Syslog.err( message )
+							raise message
+							break
+						end
+						Syslog.info( "Waiting for order %s to clear..." % $order_id )
+						sleep 3
+						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
 					end
-				end # case when 55
-			end # While loop
-		rescue => e
-			message = "ERROR: %s (exiting...)" % e.message
-			Syslog.err( message )
-			puts message if VERBOSITY >= 2
-			puts e.backtrace if $DEBUG
-			self.shutdown
-			exit
-		end # def start
+
+					# Update ticker
+					self.update_ticker
+
+					# TODO: Get USD value of trade from trade result.  For now, we calculate it ourselves:
+					quot_value = ( $order_info['quantity'].to_f * @ticker['price'].to_f ).round(2)
+
+					# Post trade results
+					Syslog.info("Tweeting trade results...")
+					case $decision
+					when "BUY"
+						tweet  = "Trade on @Bitstamp Complete:\n\n"
+						tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, quot_value, @quot_currency, $order_info['quantity'], @base_currency ]
+						tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
+						tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
+					when "SELL"
+						tweet  = "Trade on @Bitstamp Complete:\n\n"
+						tweet << "SELL %0.2f%% of %s: $%0.8f %s (%s %s)\n"    % [ @sell_percentage, @base_currency, $order_info['quantity'], @base_currency, quot_value, @quot_currency ]
+						tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
+						tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
+					end
+					self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
+
+					# Sleep for a few seconds so balances can update via the exchange
+					sleep 15
+
+				end # if $order_id
+
+				# Update ticker
+				self.update_ticker
+
+				# Save old balances
+				@base_balance_previous = @base_balance
+				@quot_balance_previous = @quot_balance
+					
+				# Refresh Account Balances
+				self.update_balances
+				puts "%s Balance: %s" % [ @base_currency, @base_balance ] if VERBOSITY >= 2
+				puts "%s Balance: %s" % [ @quot_currency, @quot_balance ] if VERBOSITY >= 2
+
+				# Calculate change in balances due to most recent trade
+				$base_diff_value   = @base_balance - @base_balance_previous
+				$quot_diff_value   = @quot_balance - @quot_balance_previous
+				if $base_diff_value == 0 && @base_balance_previous == 0
+					# Don't divide by 0
+					$base_diff_percent = 0
+				else
+					$base_diff_percent = ($base_diff_value / @base_balance_previous) * 100 
+				end
+				if $quot_diff_percent == 0 && @quot_balance_previous == 0
+					# Don't divide by 0
+					$quot_diff_percent = 0
+				else
+					$quot_diff_percent = ($quot_diff_value / @quot_balance_previous) * 100 
+				end
+
+				# Calculate total account value in both @base_currency and @quot_currency
+				$base_total = @base_balance + ( @quot_balance / @ticker['price'].to_f )
+				puts "%s Account Value: %s" % [ @base_currency, @base_total ] if VERBOSITY >= 2
+				$quot_total = @quot_balance + ( @base_balance * @ticker['price'].to_f )
+				puts "%s Account Value: %s" % [ @quot_currency, @quot_total ] if VERBOSITY >= 2
+
+				# Calculate change in total account value
+				$base_start_diff_value   = $base_total - ( @starting_base + ( @starting_quot / @ticker['price'].to_f ) )
+				$base_start_diff_percent = ($base_start_diff_value / $base_total) * 100
+				$quot_start_diff_value   = $quot_total - ( @starting_quot + ( @starting_base * @ticker['price'].to_f ) )
+				$quot_start_diff_percent = ($quot_start_diff_value / $quot_total) * 100
+
+				# Post Balances Tweet
+				tweet  = "Current Account Balances:\n\n"
+				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, @base_balance, $base_diff_value, $base_diff_percent ]
+				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, @quot_balance, $quot_diff_value, $quot_diff_percent ]
+				tweet << "Total Account Value:\n\n"
+				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, $base_start_diff_value, $base_start_diff_percent ]
+				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, $quot_start_diff_value, $quot_start_diff_percent ]
+				tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
+				self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
+
+				# Wait at least one minute since last operation
+				sleep 60 if ! SPEEDMODE
+			else
+				if @persist[:lastmin] != $minute
+					@persist[:dots] = ""
+				else
+					@persist[:dots] << "."
+				end 
+				self.save_state
+
+				if VERBOSITY >= 2
+					printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", $minute, @persist[:dots])
+					STDOUT.flush
+					sleep 0.05
+				end
+			end
+			end # case when 55
+		end # While loop
+	rescue => e
+		message = "ERROR: %s (exiting...)" % e.message
+		Syslog.err( message )
+		puts message if VERBOSITY >= 2
+		puts e.backtrace if $DEBUG
+		self.shutdown
+		exit
+	end # def start
 end # Class TCTBot
 
 # Create TCTBot instance
