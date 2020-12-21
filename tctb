@@ -1,7 +1,8 @@
 #!/usr/bin/ruby
 
 # Use this version of the Cryptomnio gem or things will break!
-gem 'cryptomnio', '=0.0.2.pre'
+#gem 'cryptomnio', '=0.0.2.pre'
+gem 'cryptomnio', '=0.1.0'
 
 # Requirements
 require 'cryptomnio'
@@ -26,7 +27,7 @@ class TCTBot
 	# The application's Name
 	APPNAME = "TCTBot"
 	# The application's Version
-	VERSION = "0.1.4"
+	VERSION = "0.1.5"
 	# The application's working directory within the user's home directory
 	WORKING_DIR = Dir.home + '/.tctb/'
 	# SPEEDMODE causes the bot to run in a compressed timeframe, 1 min == 1 sec
@@ -68,6 +69,8 @@ class TCTBot
 		@quot_currency = @market.scan(/[^_]+$/)[0].upcase # Match after underscore character to end of string
 		@starting_base = @configfile[:starting_base]
 		@starting_quot = @configfile[:starting_quot]
+		@base_balance  = 0.0
+		@quot_balance  = 0.0
 		puts "Base: %s | Quot: %s" % [ @base_currency, @quot_currency ] if $DEBUG
 
 		# Load persistent state file
@@ -153,7 +156,6 @@ class TCTBot
 			end
 
 			return true 
-			exit
 		end
 	rescue Errno::ENOENT => e
 		message = "State File '%s' NOT FOUND" % filename
@@ -279,8 +281,8 @@ class TCTBot
    # Update Account Balances from exchange
    def update_balances
 		# Get individual balances from exchange
-		@base_balance = @cryptomnio.retrieve_venue_account_balance_symbol( @base_currency )
-		@quot_balance = @cryptomnio.retrieve_venue_account_balance_symbol( @quot_currency )
+		@base_balance = @cryptomnio.get_account_balance_symbol( @base_currency.downcase )
+		@quot_balance = @cryptomnio.get_account_balance_symbol( @quot_currency.downcase )
 
 		# Output
 		puts "Account Balances: %s: %s | %s: $%s" % [ @base_currency, @base_balance, @quot_currency, @quot_balance ] if $VERBOSE
@@ -301,7 +303,7 @@ class TCTBot
 	# Update Ticker (market price)
 	def update_ticker
 		# Get new ticker from exchange
-		@ticker = @cryptomnio.retrieve_venue_market_ticker( @market )
+		@ticker = @cryptomnio.get_venue_market_ticker( @market )
 
 		# DEBUG Output
 		puts "Ticker: %s\n" % @ticker['price'] if VERBOSITY >= 2
