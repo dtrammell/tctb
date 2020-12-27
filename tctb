@@ -303,7 +303,7 @@ class TCTBot
 	# Update Ticker (market price)
 	def update_ticker
 		# Get new ticker from exchange
-		@ticker = @cryptomnio.get_venue_market_ticker( @market )
+		@ticker = @cryptomnio.get_market_ticker( @market )
 
 		# DEBUG Output
 		puts "Ticker: %s\n" % @ticker['price'] if VERBOSITY >= 2
@@ -435,7 +435,7 @@ class TCTBot
 				# On the Month
 				case
 				#when $month != @persist[:lastmonth] # Month Change!
-				when $day == 1 && $hour == 15 && $minute == 59 
+				when $day == 1 && $hour == 15 && $minute == 58 
 					leaders = self.get_leaderboard( :month, 5 )
 
 					tweet = "%s's Top 5 Monthly Influencers:\n\n" % @twitter_handle
@@ -720,11 +720,11 @@ class TCTBot
 						# Place BID order
 						message = "BUYing %0.8f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $volume, @base_currency, @buy_percentage, balance, @quot_currency ]
 						Syslog.info(message)
-						$order_id = @cryptomnio.create_venue_account_order_market( "buy", $volume, @market )
+						$order_id = @cryptomnio.put_account_order_market( "buy", $volume, @market )
 
 						# Get Order Info
 						sleep 15
-						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
+						$order_info = @cryptomnio.get_account_order( $order_id )
 						message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
 						Syslog.info(message)
 
@@ -756,11 +756,11 @@ class TCTBot
 						# Place ASK order
 						message = "SELLing %0.8f %s (%0.2f%%%% of %s %s) at MARKET" % [ $volume, @base_currency, @sell_percentage, balance, @base_currency ] 
 						Syslog.info(message)
-						$order_id = @cryptomnio.create_venue_account_order_market( "sell", $volume, @market )
+						$order_id = @cryptomnio.put_account_order_market( "sell", $volume, @market )
 
 						# Get Order Info
 						sleep 15
-						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
+						$order_info = @cryptomnio.get_account_order( $order_id )
 						message = "Placed order %s at %s" % [ $order_info['venueOrderId'], @exchange ] 
 						Syslog.info(message)
 
@@ -801,7 +801,7 @@ class TCTBot
 						end
 						Syslog.info( "Waiting for order %s to clear..." % $order_id )
 						sleep 3
-						$order_info = @cryptomnio.retrieve_venue_account_order( $order_id )
+						$order_info = @cryptomnio.get_account_order( $order_id )
 					end
 
 					# Update ticker
@@ -892,7 +892,7 @@ class TCTBot
 				self.save_state
 
 				if VERBOSITY >= 2
-					printf("\rWaiting until minute 55... (Current minute: %02d) %s          ", $minute, @persist[:dots])
+					printf("\rWaiting until a scheduled event... (Current minute: %02d) %s          ", $minute, @persist[:dots])
 					STDOUT.flush
 					sleep 0.05
 				end
