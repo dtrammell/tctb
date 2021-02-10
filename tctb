@@ -74,7 +74,7 @@ class TCTBot
 		puts "Base: %s | Quot: %s" % [ @base_currency, @quot_currency ] if $DEBUG
 
 		# Load persistent state file
-		self.load_state
+		raise "Error: Unable to load state" if ! self.load_state
 
 		# Load the Influencers databases
 		# TODO: Combine these all into a single hash
@@ -155,7 +155,7 @@ class TCTBot
 				end
 			end
 
-			return true 
+			return @persist
 		end
 	rescue Errno::ENOENT => e
 		message = "State File '%s' NOT FOUND" % filename
