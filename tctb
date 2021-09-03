@@ -817,12 +817,12 @@ class TCTBot
 						tweet  = "Trade on @Bitstamp Complete:\n\n"
 						tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, quot_value, @quot_currency, $order_info['quantity'], @base_currency ]
 						tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
-						tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
+						tweet << "Trade powered by @Cryptomnio™"
 					when "SELL"
 						tweet  = "Trade on @Bitstamp Complete:\n\n"
 						tweet << "SELL %0.2f%% of %s: $%0.8f %s (%s %s)\n"    % [ @sell_percentage, @base_currency, $order_info['quantity'], @base_currency, quot_value, @quot_currency ]
 						tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
-						tweet << "Trade powered by @Blockhenge™ #Cryptomnio™"
+						tweet << "Trade powered by @Cryptomnio™"
 					end
 					self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
