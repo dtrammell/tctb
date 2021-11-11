@@ -690,7 +690,6 @@ class TCTBot
 
 						# Determine @quot_percentage % of USD
 						# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
-						@buy_percentage = 90 if @buy_percentage == 100 # Need to give the bot a little wiggle room for market changes and trading fees
 						balance = @quot_balance.to_f 
 						$amount = (balance * (@buy_percentage / 100.0)).to_f
 						message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @quot_balance, $amount, @buy_percentage ]
@@ -703,24 +702,24 @@ class TCTBot
 				
 						# Calculate volume to buy ( $amount to spend divided by current spot price rounded to 8 decimal places )
 						$volume = ( $amount / @ticker['price'].to_f ).round(8)
-						message = "BUYing %0.8f %s with $%0.2f %s." % [ $volume, @base_currency, $amount, @quot_currency ]
+						message = "BUYing estimated %0.8f %s with $%0.2f %s." % [ $volume, @base_currency, $amount, @quot_currency ]
 						Syslog.info( message ) if VERBOSITY >= 1
 
 						# Sanity check volume to make sure it's not below minimum exchange trade limits
 						if $volume < 0.001
-							message = "Attemtped BUY of %0.8f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.001 %s). Gotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
+							message = "Attemtped BUY of %0.2f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.001 %s). Gotta HODL!!!" % [ $amount, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
 							Syslog.info(message)
 			
-							tweet = "Attempted BUY of %0.8f %s(%0.2f%% of $%0.2f %s) is below @Bitstamp's minimum order volume limit (0.001 %s).\n\nGotta HODL!!!" % [ $volume, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
+							tweet = "Attempted BUY of %0.2f %s(%0.2f%% of $%0.2f %s) is below @Bitstamp's minimum order volume limit (0.001 %s).\n\nGotta HODL!!!" % [ $amount, @base_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
 							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 							break
 						end
 
 						# Place BID order
-						message = "BUYing %0.8f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $volume, @base_currency, @buy_percentage, balance, @quot_currency ]
+						message = "BUYing %0.2f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $amount, @base_currency, @buy_percentage, balance, @quot_currency ]
 						Syslog.info(message)
-						$order_id = @cryptomnio.put_account_order_market( "buy", $volume, @market )
+						$order_id = @cryptomnio.put_account_order_market( "buy", nil, $amount, @market )
 
 						# Get Order Info
 						sleep 15
@@ -756,7 +755,7 @@ class TCTBot
 						# Place ASK order
 						message = "SELLing %0.8f %s (%0.2f%%%% of %s %s) at MARKET" % [ $volume, @base_currency, @sell_percentage, balance, @base_currency ] 
 						Syslog.info(message)
-						$order_id = @cryptomnio.put_account_order_market( "sell", $volume, @market )
+						$order_id = @cryptomnio.put_account_order_market( "sell", $volume, nil, @market )
 
 						# Get Order Info
 						sleep 15
@@ -878,6 +877,28 @@ class TCTBot
 				tweet << "Total Account Value:\n\n"
 				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, $base_start_diff_value, $base_start_diff_percent ]
 				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, $quot_start_diff_value, $quot_start_diff_percent ]
+				tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
+				self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
+
+				# Calculate the total original account value in both @base_currenty and @quot_currency
+				orig_base_total_value = @starting_base + ( @starting_quot / @ticker['price'].to_f )
+				puts "%s Account Value: %s" % [ @base_currency, orig_base_total_value ] if VERBOSITY >= 2
+				orig_quot_total_value = @starting_quot + ( @starting_base * @ticker['price'].to_f )
+				puts "%s Account Value: %s" % [ @quot_currency, orig_quot_total_value ] if VERBOSITY >= 2
+
+				# Calculate difference in total original account values vs current account values
+				orig_base_diff_value = $base_total - orig_base_total_value
+				orig_base_diff_value_percent = ( orig_base_diff_value / orig_base_total_value ) * 100
+				orig_quot_diff_value = $quot_total - orig_quot_total_value
+				orig_quot_diff_value_percent = ( orig_quot_diff_value / orig_quot_total_value ) * 100
+
+				# Post Balance Compare with Start Tweet
+				tweet  = "Original Account Value Today:\n\n"
+				tweet << "%s: %0.8f\n\n"  % [ @base_currency, orig_base_total_value ]
+				tweet << "%s: $%0.2f\n\n" % [ @quot_currency, orig_quot_total_value ]
+				tweet << "Total Account Value:\n\n"
+				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, orig_base_diff_value, orig_base_diff_value_percent ]
+				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, orig_quot_diff_value, orig_quot_diff_value_percent ]
 				tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
 				self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
