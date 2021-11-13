@@ -692,7 +692,7 @@ class TCTBot
 						# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
 						balance = @quot_balance.to_f 
 						$amount = (balance * (@buy_percentage / 100.0)).to_f
-						message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ @quot_balance, $amount, @buy_percentage ]
+						message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ balance, $amount, @buy_percentage ]
 						Syslog.info( message ) if VERBOSITY >= 1
 
 						# Get current ticker spot price
@@ -707,17 +707,17 @@ class TCTBot
 
 						# Sanity check volume to make sure it's not below minimum exchange trade limits
 						if $volume < 0.001
-							message = "Attemtped BUY of $%0.2f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.001 %s). Gotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, @quot_balance, @quot_currency, @base_currency ]
+							message = "Attemtped BUY of $%0.2f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.001 %s). Gotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency, @base_currency ]
 							Syslog.info(message)
 			
-							tweet = "Attempted BUY of $%0.2f %s (%0.2f%% of $%0.2f %s / %0.8f %s) is below @Bitstamp's minimum order volume limit (0.001 %s).\n\nGotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, @quot_balance, @volume, @base_currency, @quot_currency, @base_currency ]
+							tweet = "Attempted BUY of $%0.2f %s (%0.2f%% of $%0.2f %s / %0.8f %s) is below @Bitstamp's minimum order volume limit (0.001 %s).\n\nGotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @base_currency, $volume, @quot_currency, @base_currency ]
 							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 							break
 						end
 
 						# Place BID order
-						message = "BUYing %0.2f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $amount, @base_currency, @buy_percentage, balance, @quot_currency ]
+						message = "BUYing %0.2f %s (%0.2f%%%% of $%0.2f %s) at MARKET" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency ]
 						Syslog.info(message)
 						$order_id = @cryptomnio.put_account_order_market( "buy", nil, $amount, @market )
 
@@ -733,7 +733,7 @@ class TCTBot
 						# Calculate volume to sell ( @sell_percentage % of @base_currency balance rounded to 8 decimal places )
 						balance = @base_balance.to_f
 						$volume = (balance * (@sell_percentage / 100.0)).round(8)
-						message = "Have $%0.8f %s to SELL. SELLing %0.8f (%0.2f%%%%) of it..." % [ @base_balance, @base_currency, $volume, @sell_percentage ]
+						message = "Have $%0.8f %s to SELL. SELLing %0.8f (%0.2f%%%%) of it..." % [ balance, @base_currency, $volume, @sell_percentage ]
 						Syslog.info( message ) if VERBOSITY >= 1
 								
 						# Get current ticker spot price
