@@ -874,7 +874,7 @@ class TCTBot
 				tweet  = "Current Account Balances:\n\n"
 				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, @base_balance, $base_diff_value, $base_diff_percent ]
 				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, @quot_balance, $quot_diff_value, $quot_diff_percent ]
-				tweet << "Total Account Value:\n\n"
+				tweet << "Current Total Account Value (Trading):\n\n"
 				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, $base_start_diff_value, $base_start_diff_percent ]
 				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, $quot_start_diff_value, $quot_start_diff_percent ]
 				tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
@@ -893,10 +893,10 @@ class TCTBot
 				orig_quot_diff_value_percent = ( orig_quot_diff_value / orig_quot_total_value ) * 100
 
 				# Post Balance Compare with Start Tweet
-				tweet  = "Original Account Value Today:\n\n"
-				tweet << "%s: %0.8f\n\n"  % [ @base_currency, orig_base_total_value ]
+				tweet  = "Original Account Balances:\n\n"
+				tweet << "%s: %0.8f\n"  % [ @base_currency, orig_base_total_value ]
 				tweet << "%s: $%0.2f\n\n" % [ @quot_currency, orig_quot_total_value ]
-				tweet << "Total Account Value:\n\n"
+				tweet << "Current Total Account Value (HODLing):\n\n"
 				tweet << "%s: %0.8f\n(%+0.8f / %+0.2f%%)\n\n"     % [ @base_currency, $base_total, orig_base_diff_value, orig_base_diff_value_percent ]
 				tweet << "%s: $%0.2f\n($%+0.2f / %+0.2f%%)\n\n"   % [ @quot_currency, $quot_total, orig_quot_diff_value, orig_quot_diff_value_percent ]
 				tweet << "Current %s/%s Spot: $%s"                % [ @base_currency, @quot_currency, @ticker['price'] ]
