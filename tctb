@@ -27,7 +27,7 @@ class TCTBot
 	# The application's Name
 	APPNAME = "TCTBot"
 	# The application's Version
-	VERSION = "0.1.5"
+	VERSION = "0.1.6"
 	# The application's working directory within the user's home directory
 	WORKING_DIR = Dir.home + '/.tctb/'
 	# SPEEDMODE causes the bot to run in a compressed timeframe, 1 min == 1 sec
