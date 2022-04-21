@@ -706,11 +706,11 @@ class TCTBot
 						Syslog.info( message ) if VERBOSITY >= 1
 
 						# Sanity check volume to make sure it's not below minimum exchange trade limits
-						if $volume < 0.001
-							message = "Attemtped BUY of $%0.2f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.001 %s). Gotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency, @base_currency ]
+						if $volume < 0.0002
+							message = "Attemtped BUY of $%0.2f %s (%0.2f%%%% of $%0.2f %s) is below Bitstamp's minimum order volume limit (0.0002 %s). Gotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency, @base_currency ]
 							Syslog.info(message)
 			
-							tweet = "Attempted BUY of $%0.2f %s (%0.2f%% of $%0.2f %s / %0.8f %s) is below @Bitstamp's minimum order volume limit (0.001 %s).\n\nGotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency, $volume, @base_currency, @base_currency ]
+							tweet = "Attempted BUY of $%0.2f %s (%0.2f%% of $%0.2f %s / %0.8f %s) is below @Bitstamp's minimum order volume limit (0.0002 %s).\n\nGotta HODL!!!" % [ $amount, @quot_currency, @buy_percentage, balance, @quot_currency, $volume, @base_currency, @base_currency ]
 							self.tweet( tweet, in_reply_to_status_id: @persist[:lasttweet].id )
 
 							break
