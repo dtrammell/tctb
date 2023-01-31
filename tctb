@@ -2,7 +2,7 @@
 
 # Use this version of the Cryptomnio gem or things will break!
 #gem 'cryptomnio', '=0.0.2.pre'
-gem 'cryptomnio', '=0.1.0'
+gem 'cryptomnio', '=0.1.1'
 
 # Requirements
 require 'cryptomnio'
@@ -691,7 +691,7 @@ class TCTBot
 						# Determine @quot_percentage % of USD
 						# TODO: Figure out the math here to maximize buy percentage when vote to buy is unanimous (100%)
 						balance = @quot_balance.to_f 
-						$amount = (balance * (@buy_percentage / 100.0)).to_f
+						$amount = (balance * (@buy_percentage / 100.0)).to_f.round(8)
 						message = "Have $%0.2f USD to BUY with. Spending $%0.2f (%0.2f%%%%) of it..." % [ balance, $amount, @buy_percentage ]
 						Syslog.info( message ) if VERBOSITY >= 1
 
@@ -814,7 +814,7 @@ class TCTBot
 					case $decision
 					when "BUY"
 						tweet  = "Trade on @Bitstamp Complete:\n\n"
-						tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, quot_value, @quot_currency, $order_info['quantity'], @base_currency ]
+						tweet << "BUY %0.2f%% of %s ($%0.2f %s): %s %s\n"     % [ @buy_percentage, @quot_currency, $amount, @quot_currency, $order_info['quantity'], @base_currency ]
 						tweet << "Trading fee: $%0.2f\n\n"                    % $order_info["fee"].to_f
 						tweet << "Trade powered by @Cryptomnio™"
 					when "SELL"
